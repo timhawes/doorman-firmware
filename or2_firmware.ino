@@ -15,8 +15,9 @@
 #include <Ticker.h>
 #include <WiFiUdp.h>
 #include <EEPROM.h>
+#include "config.h"
 
-#define DEBUG 1
+// #define DEBUG
 
 #ifdef DEBUG
  #define DEBUG_PRINT(x) Serial.print(x)
@@ -66,8 +67,6 @@ const uint8_t ledPin = 16;
 const uint8_t snibPin = 5;
 const uint8_t pnResetPin = 2;
 
-const char* ssid = "";
-const char* wpa_password = "";
 const int remote_udp_port = 21046;
 const int local_udp_port = 21045;
 
