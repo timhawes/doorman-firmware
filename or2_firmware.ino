@@ -417,6 +417,16 @@ void nfcLoop()
     // the default behaviour of the PN532.
     nfc.setPassiveActivationRetries(0x00);
 
+    // Call setParameters function in the PN532 and disable the automatic ATS requests.
+    //
+    // Smart cards would normally respond to ATS, causing the Arduino I2C buffer limit
+    // to be reached and packets to be corrupted.
+    uint8_t packet_buffer[64];
+    packet_buffer[0] = 0x12;
+    packet_buffer[1] = 0x24;
+    pn532i2c.writeCommand(packet_buffer, 2);
+    pn532i2c.readResponse(packet_buffer, sizeof(packet_buffer), 50);
+
     // configure board to read RFID tags
     nfc.SAMConfig();
 
