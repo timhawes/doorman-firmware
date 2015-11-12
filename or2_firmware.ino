@@ -1021,7 +1021,13 @@ void onMessageReceived(int len, uint8_t message[])
       }
       break;
     }
-
+    
+    // trigger a card-unlock by proxy
+    case 0x98: {
+      onNetworkProxyAuth();
+      break;
+    }
+    
   }
 }
 
@@ -1118,6 +1124,18 @@ void snibLongPress()
 
   // use longpress to silence the current sound pattern
   soundActive = false;
+}
+
+void onNetworkProxyAuth()
+{
+  Serial.println("Accepting authentication by proxy");
+  soundPattern = soundHighChirp;
+  soundPosition = 0;
+  soundActive = true;
+  cardUnlockActive = true;
+  cardUnlockUntil = millis() + S_TO_MS(settings.cardUnlockTime);
+  authState = 6;
+  sendStatusPacket = true;  
 }
 
 void onNetworkAuthResponse(uint8_t response)
