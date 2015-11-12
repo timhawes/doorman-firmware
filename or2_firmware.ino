@@ -146,6 +146,10 @@ volatile unsigned long exitUnlockUntil = 0;
 volatile boolean snibUnlockActive = false;
 volatile unsigned long snibUnlockUntil = 0;
 
+uint16_t secondsOffline = 0;
+uint16_t pn532ResetCount = 0;
+uint16_t wifiConnectionCount = 0;
+uint16_t clientConnectionCount = 0;
 uint8_t doorState = 0;
 uint8_t exitButtonState;
 uint8_t snibButtonState;
@@ -282,6 +286,7 @@ void wifiLoop()
 {
   static boolean oldClientConnected = false;
   static int oldState = 0;
+  static unsigned long lastClientDisconnect = 0;
   int newState;
 
   newState = WiFi.status();
@@ -296,6 +301,7 @@ void wifiLoop()
   if (newState == WL_CONNECTED) {
     if (wifiConnected == false) {
       wifiConnected = true;
+      wifiConnectionCount++;
       onWifiConnect();
     }
     udpClientLoop();
@@ -309,9 +315,12 @@ void wifiLoop()
 
   if (oldClientConnected == false && clientConnected == true) {
     oldClientConnected = true;
+    secondsOffline = secondsOffline + ((millis()-lastClientDisconnect)/1000);
+    clientConnectionCount++;
     onClientConnect();
   } else if (oldClientConnected == true && clientConnected == false) {
     oldClientConnected = false;
+    lastClientDisconnect = millis();
     onClientDisconnect();
   }
 }
@@ -397,6 +406,7 @@ void nfcLoop()
     delay(50);
     digitalWrite(pnResetPin, HIGH);
     delay(100);
+    pn532ResetCount++;
     nfc.begin();
     versiondata = nfc.getFirmwareVersion();
 
@@ -1259,6 +1269,10 @@ void sendSlowStatus()
   Udp.write(0x06); Udp.write((const uint8_t*)&cardDatabaseSize, 2);
   Udp.write(0x21); Udp.write((const uint8_t*)&freeHeap, 4);
   Udp.write(0x22); Udp.write((const uint8_t*)&now, 4);
+  Udp.write(0x30); Udp.write((uint8_t)((pn532ResetCount & 0xFF00) >> 8)); Udp.write((uint8_t)(pn532ResetCount & 0xFF));
+  Udp.write(0x31); Udp.write((uint8_t)((secondsOffline & 0xFF00) >> 8)); Udp.write((uint8_t)(secondsOffline & 0xFF));
+  Udp.write(0x32); Udp.write((uint8_t)((wifiConnectionCount & 0xFF00) >> 8)); Udp.write((uint8_t)(wifiConnectionCount & 0xFF));
+  Udp.write(0x33); Udp.write((uint8_t)((clientConnectionCount & 0xFF00) >> 8)); Udp.write((uint8_t)(clientConnectionCount & 0xFF));
   Udp.write(0x61); Udp.write((uint8_t)(settings.cardUnlockTime & 0xFF));
   Udp.write(0x62); Udp.write((uint8_t)(settings.exitUnlockMinTime & 0xFF));
   Udp.write(0x63); Udp.write((uint8_t)(settings.exitUnlockMaxTime & 0xFF));
