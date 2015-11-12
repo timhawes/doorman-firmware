@@ -87,7 +87,7 @@ struct Settings {
   uint8_t  exitUnlockMinTime         = 25;   // cs
   uint8_t  exitUnlockMaxTime         = 10;   // seconds
   uint8_t  cardUnlockTime            = 5;    // seconds
-  uint8_t  pn532CheckInterval        = 60;   // seconds
+  uint8_t  pn532CheckInterval        = 30;   // seconds
   uint8_t  authNetworkResendInterval = 150;  // ms
   uint8_t  authNetworkTimeout        = 5;    // ds
   uint16_t voltageScaleMultiplier    = 500;
@@ -101,7 +101,7 @@ struct Settings {
   uint8_t  statusMinInterval         = 1;    // ds
   uint8_t  statusMaxInterval         = 50;   // ds
   uint8_t  doorAlarmTime             = 0;    // seconds
-  uint8_t  errorSoundsEnabled        = 1;
+  uint8_t  errorSoundsEnabled        = 0;
   uint8_t  allowSnibOnBattery        = 0;
   uint8_t  helloFastInterval         = 100;  // cs
   uint8_t  helloSlowInterval         = 10;   // s
