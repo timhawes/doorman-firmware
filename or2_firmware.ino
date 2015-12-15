@@ -408,6 +408,7 @@ void nfcLoop()
     delay(100);
     pn532ResetCount++;
     nfc.begin();
+    delay(50);
     versiondata = nfc.getFirmwareVersion();
 
     if (versiondata) {
