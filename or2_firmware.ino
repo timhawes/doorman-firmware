@@ -190,7 +190,46 @@ WiFiUDP Udp;
 PN532_I2C pn532i2c(Wire);
 PN532 nfc(pn532i2c);
 
-void setup(void) {
+void setup();
+void loop();
+void dumpSystemInfo();
+void wifiLoop();
+void errorChirpLoop();
+void voltageLoop();
+void nfcLoop();
+void udpClientLoop();
+void udpReceiveMessages();
+void onWifiConnect();
+void onWifiDisconnect();
+void onClientConnect();
+void onClientDisconnect();
+void onMessageReceived(int len, uint8_t message[]);
+void dumpAuthorizationDatabaseToSerial();
+void exitButtonUp();
+void exitButtonDown();
+void exitLongPress();
+void doorOpen();
+void doorClosed();
+void snibButtonUp();
+void snibButtonDown();
+void snibLongPress();
+void onNetworkProxyAuth();
+void onNetworkAuthResponse(uint8_t response);
+void onCard(uint8_t uidLength, uint8_t uid[]);
+void onCardRemoved();
+void onMains();
+void onBattery();
+void sendSlowStatus();
+void sendFastStatus();
+void commitEeprom();
+void fastLoop();
+void unlockLoop();
+void inputsLoop();
+void ledLoop();
+void soundLoop();
+void onAuthTimeout();
+
+void setup() {
 
   Serial.begin(115200);
   Serial.println();
