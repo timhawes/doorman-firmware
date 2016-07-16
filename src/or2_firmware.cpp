@@ -51,6 +51,9 @@
 #define POWER_MAINS 0
 #define POWER_BATTERY 1
 
+#define SNIB_BUTTON_MODE_TOGGLE 0
+#define SNIB_BUTTON_MODE_HYBRID 1
+
 #define LED_OFF 0
 #define LED_DIM 1
 #define LED_ON 2
@@ -86,7 +89,7 @@ struct AuthorizedCard cardDatabase[MAX_AUTHORIZED_CARDS];
 
 struct Settings {
   uint16_t snibUnlockTime            = 3600; // seconds
-  uint8_t  exitUnlockMinTime         = 25;   // cs
+  uint8_t  exitUnlockMinTime         = 15;   // square root millis
   uint8_t  exitUnlockMaxTime         = 10;   // seconds
   uint8_t  cardUnlockTime            = 5;    // seconds
   uint8_t  pn532CheckInterval        = 30;   // seconds
@@ -108,6 +111,7 @@ struct Settings {
   uint8_t  helloFastInterval         = 100;  // cs
   uint8_t  helloSlowInterval         = 10;   // s
   uint8_t  helloResponseTimeout      = 21;   // s
+  uint8_t  snibButtonMode            = SNIB_BUTTON_MODE_TOGGLE;
 } settings;
 
 boolean sendStatusPacket = true;
@@ -288,10 +292,12 @@ void loop()
   wifiLoop();
   errorChirpLoop();
 
-  if (doorForced || cardUnlockActive || exitUnlockActive) {
+  if (doorForced || cardUnlockActive) {
     ledMode = LED_FAST;
   } else if (snibUnlockActive) {
     ledMode = LED_MEDIUM;
+  } else if (exitUnlockActive) {
+    ledMode = LED_FAST;
   } else if (powerMode==POWER_BATTERY) {
     ledMode = LED_DIM;
   } else if (wifiConnected==false || clientConnected==false) {
@@ -1065,6 +1071,12 @@ void onMessageReceived(int len, uint8_t message[])
             eepromLastPendingChange = millis();
             pos += 2;
             break;
+          case 0x78:
+            settings.snibButtonMode = message[pos+1];
+            eepromChangesPending = true;
+            eepromLastPendingChange = millis();
+            pos += 2;
+            break;
           default:
             Serial.print("unknown variable code, aborting");
             Serial.println(message[pos], DEC);
@@ -1111,7 +1123,7 @@ void exitButtonUp()
   sendStatusPacket = true;
   if (exitUnlockActive) {
     // already unlocked, so just reduce the timeperiod back to minimum
-    exitUnlockUntil = millis() + CS_TO_MS(settings.exitUnlockMinTime);
+    exitUnlockUntil = millis() + (settings.exitUnlockMinTime*settings.exitUnlockMinTime);
   }
 }
 
@@ -1152,6 +1164,15 @@ void snibButtonUp()
   Serial.println("snibButtonUp");
   snibButtonState = 0;
   sendStatusPacket = true;
+
+  if (settings.snibButtonMode==SNIB_BUTTON_MODE_HYBRID) {
+    Serial.println("snibButtonUp -> exit");
+    if (exitUnlockActive) {
+      // already unlocked, so just reduce the timeperiod back to minimum
+      exitUnlockUntil = millis() + (settings.exitUnlockMinTime*settings.exitUnlockMinTime);
+    }
+  }
+
 }
 
 void snibButtonDown()
@@ -1159,12 +1180,22 @@ void snibButtonDown()
   Serial.println("snibButtonDown");
   snibButtonState = 1;
   sendStatusPacket = true;
-  if (snibUnlockActive) {
-    // already unlocked, so flip back to locked
-    snibUnlockActive = false;
-  } else if (snibEnabled && (powerMode==0 || settings.allowSnibOnBattery)) {
-    snibUnlockActive = true;
-    snibUnlockUntil = millis() + S_TO_MS(settings.snibUnlockTime);
+
+  if (settings.snibButtonMode==SNIB_BUTTON_MODE_HYBRID) {
+    Serial.println("snibButtonDown -> exit");
+    if (exitEnabled) {
+      exitUnlockActive = true;
+      exitUnlockUntil = millis() + S_TO_MS(settings.exitUnlockMaxTime);
+    }
+  } else {
+    Serial.println("snibButtonDown -> snib");
+    if (snibUnlockActive) {
+      // already unlocked, so flip back to locked
+      snibUnlockActive = false;
+    } else if (snibEnabled && (powerMode==0 || settings.allowSnibOnBattery)) {
+      snibUnlockActive = true;
+      snibUnlockUntil = millis() + S_TO_MS(settings.snibUnlockTime);
+    }
   }
 }
 
@@ -1176,6 +1207,25 @@ void snibLongPress()
 
   // use longpress to silence the current sound pattern
   soundActive = false;
+
+  if (settings.snibButtonMode==SNIB_BUTTON_MODE_HYBRID) {
+    Serial.println("snibLongPress -> snib");
+    if (snibUnlockActive) {
+      // already unlocked, so flip back to locked
+      snibUnlockActive = false;
+      exitUnlockActive = false;
+      soundPattern = soundMidChirp;
+      soundPosition = 0;
+      soundActive = true;
+    } else if (snibEnabled && (powerMode==0 || settings.allowSnibOnBattery)) {
+      snibUnlockActive = true;
+      exitUnlockActive = false;
+      snibUnlockUntil = millis() + S_TO_MS(settings.snibUnlockTime);
+      soundPattern = soundMidChirp;
+      soundPosition = 0;
+      soundActive = true;
+    }
+  }
 }
 
 void onNetworkProxyAuth()
@@ -1338,6 +1388,7 @@ void sendSlowStatus()
   Udp.write(0x75); Udp.write((uint8_t)settings.helloFastInterval);
   Udp.write(0x76); Udp.write((uint8_t)settings.helloSlowInterval);
   Udp.write(0x77); Udp.write((uint8_t)settings.helloResponseTimeout);
+  Udp.write(0x78); Udp.write((uint8_t)settings.snibButtonMode);
 }
 
 void sendFastStatus()
