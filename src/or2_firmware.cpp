@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 /*
  * Hardware:
  * ESP-12E
