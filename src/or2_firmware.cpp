@@ -192,6 +192,7 @@ uint16_t soundPosition = 0;
 boolean soundActive = false;
 
 WiFiUDP Udp;
+IPAddress broadcast_address;
 
 PN532_I2C pn532i2c(Wire);
 PN532 nfc(pn532i2c);
@@ -562,7 +563,7 @@ void udpClientLoop()
   if (clientConnected == false && (millis() - helloLastSent > CS_TO_MS(settings.helloFastInterval))) {
     //Serial.println("Sending hello (fast interval)");
     Udp.begin(local_udp_port);
-    Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+    Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
     Udp.write((uint8_t)0x00);
     Udp.write(clientid, strlen(clientid));
     Udp.write((uint8_t)0x00);
@@ -573,7 +574,7 @@ void udpClientLoop()
   if (authState == 1) {
     if (millis() - authRequestLastSent > settings.authNetworkResendInterval) {
       udpReceiveMessages();
-      Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+      Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
       Udp.write((const uint8_t*)&authRequestPacket, sizeof(authRequestPacket));
       Udp.endPacket();
       authRequestLastSent = millis();
@@ -585,7 +586,7 @@ void udpClientLoop()
   if (cardDatabaseSendRequested && cardDatabaseSendPosition<=cardDatabaseSendFinish) {
     udpReceiveMessages();
     //Serial.println("send starting");
-    Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+    Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
     Udp.write(0x04);
     uint8_t total = 0;
     while (total<48 && cardDatabaseSendPosition<=cardDatabaseSendFinish) {
@@ -633,7 +634,7 @@ void udpClientLoop()
       udpReceiveMessages();
 
       //Serial.println("sending status");
-      Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+      Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
       Udp.write(0x05);
       sendStatusPacket = false;
       sendFastStatus();
@@ -656,7 +657,7 @@ void udpClientLoop()
   if (millis() - helloLastSent > S_TO_MS(settings.helloSlowInterval)) {
     udpReceiveMessages();
     //Serial.println("Sending hello (slow interval)");
-    Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+    Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
     Udp.write((uint8_t)0x00);
     Udp.write(clientid, strlen(clientid));
     Udp.write((uint8_t)0x00);
@@ -713,6 +714,7 @@ void onWifiConnect()
 {
   Serial.print("Wifi connected ");
   Serial.println(WiFi.localIP());
+  broadcast_address = WiFi.localIP() | (~WiFi.subnetMask());
 }
 
 void onWifiDisconnect()
