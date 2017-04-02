@@ -1087,13 +1087,13 @@ void onMessageReceived(int len, uint8_t message[])
       }
       break;
     }
-    
+
     // trigger a card-unlock by proxy
     case 0x98: {
       onNetworkProxyAuth();
       break;
     }
-    
+
   }
 }
 
@@ -1239,7 +1239,7 @@ void onNetworkProxyAuth()
   cardUnlockActive = true;
   cardUnlockUntil = millis() + S_TO_MS(settings.cardUnlockTime);
   authState = 6;
-  sendStatusPacket = true;  
+  sendStatusPacket = true;
 }
 
 void onNetworkAuthResponse(uint8_t response)
