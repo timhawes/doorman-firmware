@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 /*
  * Hardware:
  * ESP-12E
@@ -49,6 +51,9 @@
 #define POWER_MAINS 0
 #define POWER_BATTERY 1
 
+#define SNIB_BUTTON_MODE_TOGGLE 0
+#define SNIB_BUTTON_MODE_HYBRID 1
+
 #define LED_OFF 0
 #define LED_DIM 1
 #define LED_ON 2
@@ -84,7 +89,7 @@ struct AuthorizedCard cardDatabase[MAX_AUTHORIZED_CARDS];
 
 struct Settings {
   uint16_t snibUnlockTime            = 3600; // seconds
-  uint8_t  exitUnlockMinTime         = 25;   // cs
+  uint8_t  exitUnlockMinTime         = 15;   // square root millis
   uint8_t  exitUnlockMaxTime         = 10;   // seconds
   uint8_t  cardUnlockTime            = 5;    // seconds
   uint8_t  pn532CheckInterval        = 30;   // seconds
@@ -106,6 +111,7 @@ struct Settings {
   uint8_t  helloFastInterval         = 100;  // cs
   uint8_t  helloSlowInterval         = 10;   // s
   uint8_t  helloResponseTimeout      = 21;   // s
+  uint8_t  snibButtonMode            = SNIB_BUTTON_MODE_TOGGLE;
 } settings;
 
 boolean sendStatusPacket = true;
@@ -186,6 +192,7 @@ uint16_t soundPosition = 0;
 boolean soundActive = false;
 
 WiFiUDP Udp;
+IPAddress broadcast_address;
 
 PN532_I2C pn532i2c(Wire);
 PN532 nfc(pn532i2c);
@@ -264,6 +271,7 @@ void setup() {
   snprintf(clientid, sizeof(clientid), "ESP_OR_%08X", ESP.getChipId());
 
   Wire.begin(sdaPin, sclPin);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, wpa_password);
 
   // startup sound
@@ -286,10 +294,12 @@ void loop()
   wifiLoop();
   errorChirpLoop();
 
-  if (doorForced || cardUnlockActive || exitUnlockActive) {
+  if (doorForced || cardUnlockActive) {
     ledMode = LED_FAST;
   } else if (snibUnlockActive) {
     ledMode = LED_MEDIUM;
+  } else if (exitUnlockActive) {
+    ledMode = LED_FAST;
   } else if (powerMode==POWER_BATTERY) {
     ledMode = LED_DIM;
   } else if (wifiConnected==false || clientConnected==false) {
@@ -554,7 +564,7 @@ void udpClientLoop()
   if (clientConnected == false && (millis() - helloLastSent > CS_TO_MS(settings.helloFastInterval))) {
     //Serial.println("Sending hello (fast interval)");
     Udp.begin(local_udp_port);
-    Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+    Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
     Udp.write((uint8_t)0x00);
     Udp.write(clientid, strlen(clientid));
     Udp.write((uint8_t)0x00);
@@ -565,7 +575,7 @@ void udpClientLoop()
   if (authState == 1) {
     if (millis() - authRequestLastSent > settings.authNetworkResendInterval) {
       udpReceiveMessages();
-      Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+      Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
       Udp.write((const uint8_t*)&authRequestPacket, sizeof(authRequestPacket));
       Udp.endPacket();
       authRequestLastSent = millis();
@@ -577,7 +587,7 @@ void udpClientLoop()
   if (cardDatabaseSendRequested && cardDatabaseSendPosition<=cardDatabaseSendFinish) {
     udpReceiveMessages();
     //Serial.println("send starting");
-    Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+    Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
     Udp.write(0x04);
     uint8_t total = 0;
     while (total<48 && cardDatabaseSendPosition<=cardDatabaseSendFinish) {
@@ -625,7 +635,7 @@ void udpClientLoop()
       udpReceiveMessages();
 
       //Serial.println("sending status");
-      Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+      Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
       Udp.write(0x05);
       sendStatusPacket = false;
       sendFastStatus();
@@ -648,7 +658,7 @@ void udpClientLoop()
   if (millis() - helloLastSent > S_TO_MS(settings.helloSlowInterval)) {
     udpReceiveMessages();
     //Serial.println("Sending hello (slow interval)");
-    Udp.beginPacketMulticast(IPAddress(255, 255, 255, 255), remote_udp_port, WiFi.localIP());
+    Udp.beginPacketMulticast(broadcast_address, remote_udp_port, WiFi.localIP());
     Udp.write((uint8_t)0x00);
     Udp.write(clientid, strlen(clientid));
     Udp.write((uint8_t)0x00);
@@ -705,6 +715,7 @@ void onWifiConnect()
 {
   Serial.print("Wifi connected ");
   Serial.println(WiFi.localIP());
+  broadcast_address = WiFi.localIP() | (~WiFi.subnetMask());
 }
 
 void onWifiDisconnect()
@@ -1063,6 +1074,12 @@ void onMessageReceived(int len, uint8_t message[])
             eepromLastPendingChange = millis();
             pos += 2;
             break;
+          case 0x78:
+            settings.snibButtonMode = message[pos+1];
+            eepromChangesPending = true;
+            eepromLastPendingChange = millis();
+            pos += 2;
+            break;
           default:
             Serial.print("unknown variable code, aborting");
             Serial.println(message[pos], DEC);
@@ -1071,13 +1088,13 @@ void onMessageReceived(int len, uint8_t message[])
       }
       break;
     }
-    
+
     // trigger a card-unlock by proxy
     case 0x98: {
       onNetworkProxyAuth();
       break;
     }
-    
+
   }
 }
 
@@ -1109,7 +1126,7 @@ void exitButtonUp()
   sendStatusPacket = true;
   if (exitUnlockActive) {
     // already unlocked, so just reduce the timeperiod back to minimum
-    exitUnlockUntil = millis() + CS_TO_MS(settings.exitUnlockMinTime);
+    exitUnlockUntil = millis() + (settings.exitUnlockMinTime*settings.exitUnlockMinTime);
   }
 }
 
@@ -1150,6 +1167,15 @@ void snibButtonUp()
   Serial.println("snibButtonUp");
   snibButtonState = 0;
   sendStatusPacket = true;
+
+  if (settings.snibButtonMode==SNIB_BUTTON_MODE_HYBRID) {
+    Serial.println("snibButtonUp -> exit");
+    if (exitUnlockActive) {
+      // already unlocked, so just reduce the timeperiod back to minimum
+      exitUnlockUntil = millis() + (settings.exitUnlockMinTime*settings.exitUnlockMinTime);
+    }
+  }
+
 }
 
 void snibButtonDown()
@@ -1157,12 +1183,22 @@ void snibButtonDown()
   Serial.println("snibButtonDown");
   snibButtonState = 1;
   sendStatusPacket = true;
-  if (snibUnlockActive) {
-    // already unlocked, so flip back to locked
-    snibUnlockActive = false;
-  } else if (snibEnabled && (powerMode==0 || settings.allowSnibOnBattery)) {
-    snibUnlockActive = true;
-    snibUnlockUntil = millis() + S_TO_MS(settings.snibUnlockTime);
+
+  if (settings.snibButtonMode==SNIB_BUTTON_MODE_HYBRID) {
+    Serial.println("snibButtonDown -> exit");
+    if (exitEnabled) {
+      exitUnlockActive = true;
+      exitUnlockUntil = millis() + S_TO_MS(settings.exitUnlockMaxTime);
+    }
+  } else {
+    Serial.println("snibButtonDown -> snib");
+    if (snibUnlockActive) {
+      // already unlocked, so flip back to locked
+      snibUnlockActive = false;
+    } else if (snibEnabled && (powerMode==0 || settings.allowSnibOnBattery)) {
+      snibUnlockActive = true;
+      snibUnlockUntil = millis() + S_TO_MS(settings.snibUnlockTime);
+    }
   }
 }
 
@@ -1174,6 +1210,25 @@ void snibLongPress()
 
   // use longpress to silence the current sound pattern
   soundActive = false;
+
+  if (settings.snibButtonMode==SNIB_BUTTON_MODE_HYBRID) {
+    Serial.println("snibLongPress -> snib");
+    if (snibUnlockActive) {
+      // already unlocked, so flip back to locked
+      snibUnlockActive = false;
+      exitUnlockActive = false;
+      soundPattern = soundMidChirp;
+      soundPosition = 0;
+      soundActive = true;
+    } else if (snibEnabled && (powerMode==0 || settings.allowSnibOnBattery)) {
+      snibUnlockActive = true;
+      exitUnlockActive = false;
+      snibUnlockUntil = millis() + S_TO_MS(settings.snibUnlockTime);
+      soundPattern = soundMidChirp;
+      soundPosition = 0;
+      soundActive = true;
+    }
+  }
 }
 
 void onNetworkProxyAuth()
@@ -1185,7 +1240,7 @@ void onNetworkProxyAuth()
   cardUnlockActive = true;
   cardUnlockUntil = millis() + S_TO_MS(settings.cardUnlockTime);
   authState = 6;
-  sendStatusPacket = true;  
+  sendStatusPacket = true;
 }
 
 void onNetworkAuthResponse(uint8_t response)
@@ -1336,6 +1391,7 @@ void sendSlowStatus()
   Udp.write(0x75); Udp.write((uint8_t)settings.helloFastInterval);
   Udp.write(0x76); Udp.write((uint8_t)settings.helloSlowInterval);
   Udp.write(0x77); Udp.write((uint8_t)settings.helloResponseTimeout);
+  Udp.write(0x78); Udp.write((uint8_t)settings.snibButtonMode);
 }
 
 void sendFastStatus()
