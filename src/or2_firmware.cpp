@@ -271,6 +271,7 @@ void setup() {
   snprintf(clientid, sizeof(clientid), "ESP_OR_%08X", ESP.getChipId());
 
   Wire.begin(sdaPin, sclPin);
+  WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, wpa_password);
 
   // startup sound
