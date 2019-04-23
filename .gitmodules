@@ -1,0 +1,3 @@
+[submodule "lib/_PN532"]
+	path = lib/_PN532
+	url = https://github.com/Seeed-Studio/PN532.git
