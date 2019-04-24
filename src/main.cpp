@@ -804,33 +804,41 @@ void network_cmd_state_set(JsonObject &obj)
 {
   if (obj.containsKey("card_enable")) {
     state.card_enable = obj["card_enable"];
-  } else if (obj.containsKey("exit_enable")) {
+  }
+  if (obj.containsKey("exit_enable")) {
     state.exit_enable = obj["exit_enable"];
-  } else if (obj.containsKey("snib_enable")) {
+  }
+  if (obj.containsKey("snib_enable")) {
     state.snib_enable = obj["snib_enable"];
-  } else if (obj.containsKey("card_active")) {
+  }
+  if (obj.containsKey("card_active")) {
     state.card_active = obj["card_active"];
     if (state.card_active) {
       state.card_unlock_until = millis() + config.card_unlock_time;
     }
-  } else if (obj.containsKey("exit_active")) {
+  }
+  if (obj.containsKey("exit_active")) {
     state.exit_active = obj["exit_active"];
     if (state.exit_active) {
       state.exit_unlock_until = millis() + config.exit_unlock_time;
     }
-  } else if (obj.containsKey("snib_active")) {
+  }
+  if (obj.containsKey("snib_active")) {
     state.snib_active = obj["snib_active"];
     if (state.snib_active) {
       state.snib_unlock_until = millis() + config.snib_unlock_time;
     }
-  } else if (obj.containsKey("remote_active")) {
+  }
+  if (obj.containsKey("remote_active")) {
     state.remote_active = obj["remote_active"];
     if (state.remote_active) {
       state.remote_unlock_until = millis() + config.remote_unlock_time;
     }
-  } else if (obj.containsKey("user")) {
+  }
+  if (obj.containsKey("user")) {
     strncpy(state.user, obj["user"], sizeof(state.user));
-  } else if (obj.containsKey("snib_renew")) {
+  }
+  if (obj.containsKey("snib_renew")) {
     if (state.snib_active) {
       state.snib_unlock_until = millis() + config.snib_unlock_time;
     }
