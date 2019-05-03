@@ -103,10 +103,11 @@ void Network::connectToTcp() {
     return;
   }
 
-  if (client->connecting() || client->connected()) {
-    Serial.println("network: TCP client is already connected or connecting");
+  if (tcp_active) {
     return;
   }
+
+  tcp_active = true;
 
   client->onError(
       [=](void *arg, AsyncClient *c, int error) {
@@ -114,6 +115,7 @@ void Network::connectToTcp() {
         Serial.print(error, DEC);
         Serial.print(": ");
         Serial.println(c->errorToString(error));
+        tcp_active = false;
         tcpReconnectTimer.once_scheduled(2, std::bind(&Network::connectToTcp, this));
       },
       NULL);
@@ -166,6 +168,7 @@ void Network::connectToTcp() {
         if (state_callback) {
           state_callback(true, false, false);
         }
+        tcp_active = false;
         tcpReconnectTimer.once_scheduled(2, std::bind(&Network::connectToTcp, this));
       },
       NULL);
@@ -208,6 +211,7 @@ void Network::connectToTcp() {
   if (!client->connect(server_host, server_port, server_tls_enabled)) {
     Serial.println("network: TCP client connect failed immediately");
     client->close(true);
+    tcp_active = false;
     tcpReconnectTimer.once_scheduled(2, std::bind(&Network::connectToTcp, this));
   }
 }

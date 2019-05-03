@@ -31,6 +31,7 @@ class Network {
   int server_port;
   bool server_tls_enabled;
   bool server_tls_verify;
+  bool tcp_active = false;
   const char *wifi_password;
   const char *wifi_ssid;
   bool rx_scheduled = false;
