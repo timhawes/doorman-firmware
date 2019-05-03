@@ -754,7 +754,11 @@ void network_cmd_metrics_query(JsonObject &obj)
   reply["esp_free_heap"] = ESP.getFreeHeap();
   reply["millis"] = millis();
   reply["net_rx_buf_max"] = net.rx_buffer_high_watermark;
-  reply["net_tcp_reconns"] = net.client_reconnections;
+  reply["net_tcp_double_connect_errors"] = net.tcp_double_connect_errors;
+  reply["net_tcp_reconns"] = net.tcp_connects;
+  reply["net_tcp_fingerprint_errors"] = net.tcp_fingerprint_errors;
+  reply["net_tcp_async_errors"] = net.tcp_async_errors;
+  reply["net_tcp_sync_errors"] = net.tcp_sync_errors;
   reply["net_tx_buf_max"] = net.tx_buffer_high_watermark;
   reply["net_tx_delay_count"] = net.tx_delay_count;
   reply["net_wifi_reconns"] = net.wifi_reconnections;

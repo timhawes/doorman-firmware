@@ -48,7 +48,11 @@ class Network {
 
  public:
   Network();
-  int client_reconnections = 0;
+  int tcp_connects = 0;
+  int tcp_double_connect_errors = 0;
+  int tcp_async_errors = 0;
+  int tcp_sync_errors = 0;
+  int tcp_fingerprint_errors = 0;
   int rx_buffer_high_watermark = 0;
   int tx_buffer_high_watermark = 0;
   int tx_delay_count = 0;

@@ -104,6 +104,7 @@ void Network::connectToTcp() {
   }
 
   if (tcp_active) {
+    tcp_double_connect_errors++;
     return;
   }
 
@@ -111,6 +112,7 @@ void Network::connectToTcp() {
 
   client->onError(
       [=](void *arg, AsyncClient *c, int error) {
+        tcp_async_errors++;
         Serial.print("network: TCP client error ");
         Serial.print(error, DEC);
         Serial.print(": ");
@@ -131,7 +133,7 @@ void Network::connectToTcp() {
   client->onConnect(
       [=](void *arg, AsyncClient *c) {
         Serial.println("network: TCP client connected");
-        client_reconnections++;
+        tcp_connects++;
         if (server_tls_enabled && server_tls_verify) {
           SSL *ssl = c->getSSL();
           bool matched = false;
@@ -145,6 +147,7 @@ void Network::connectToTcp() {
           }
           if (!matched) {
             Serial.println("network: TLS fingerprint doesn't match");
+            tcp_fingerprint_errors++;
             c->close(true);
           }
         } else {
@@ -209,6 +212,7 @@ void Network::connectToTcp() {
 
   Serial.println("network: TCP client connecting...");
   if (!client->connect(server_host, server_port, server_tls_enabled)) {
+    tcp_sync_errors++;
     Serial.println("network: TCP client connect failed immediately");
     client->close(true);
     tcp_active = false;
