@@ -17,8 +17,8 @@ void AppConfig::LoadDefaults() {
   card_unlock_time = 5000;
   error_sounds = true;
   exit_anti_bounce = false;
+  exit_interactive_time = 0;
   exit_unlock_time = 5000;
-  exit_unlock_time_max = 5000;
   hold_exit_for_snib = false;
   invert_relay = false;
   long_press_time = 1000;
@@ -69,8 +69,8 @@ bool AppConfig::LoadJson(const char *filename) {
   card_unlock_time = root["card_unlock_time"];
   error_sounds = root["error_sounds"];
   exit_anti_bounce = root["exit_anti_bounce"];
+  exit_interactive_time = root["exit_interactive_time"];
   exit_unlock_time = root["exit_unlock_time"];
-  exit_unlock_time_max = root["exit_unlock_time_max"];
   hold_exit_for_snib = root["hold_exit_for_snib"];
   invert_relay = root["invert_relay"];
   long_press_time = root["long_press_time"];

@@ -23,7 +23,7 @@ class AppConfig {
   float voltage_multiplier;
   float voltage_rising_threshold;
   int card_unlock_time;
-  int exit_unlock_time_max;
+  int exit_interactive_time;
   int exit_unlock_time;
   int long_press_time;
   int network_watchdog_time;

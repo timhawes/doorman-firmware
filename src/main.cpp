@@ -368,6 +368,13 @@ void exit_longpress_callback()
 void exit_release_callback()
 {
   Serial.println("exit-release");
+
+  // handle exit button interactive mode
+  if (state.exit_active) {
+    if (config.exit_interactive_time > 0) {
+      state.exit_unlock_until = millis() + config.exit_interactive_time;
+    }
+  }
 }
 
 void snib_press_callback()
