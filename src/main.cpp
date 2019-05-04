@@ -793,7 +793,7 @@ void network_cmd_reset(JsonObject &obj)
 {
   reset_pending = true;
   if (obj["force"]) {
-    //display.restart_warning();
+    led.off();
     ESP.reset();
     delay(5000);
   }
@@ -803,7 +803,7 @@ void network_cmd_restart(JsonObject &obj)
 {
   restart_pending = true;
   if (obj["force"]) {
-    //display.restart_warning();
+    led.off();
     ESP.restart();
     delay(5000);
   }
@@ -1085,6 +1085,7 @@ void loop() {
   if (firmware_restart_pending) {
     Serial.println("restarting to complete firmware install...");
     net.stop();
+    led.off();
     delay(1000);
     Serial.println("restarting now!");
     ESP.restart();
@@ -1094,6 +1095,7 @@ void loop() {
   if (reset_pending || restart_pending) {
     Serial.println("rebooting at remote request...");
     net.stop();
+    led.off();
     delay(1000);
     if (reset_pending) {
       Serial.println("resetting now!");
