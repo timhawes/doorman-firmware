@@ -826,6 +826,7 @@ void network_cmd_state_set(JsonObject &obj)
     state.card_active = obj["card_active"];
     if (state.card_active) {
       state.card_unlock_until = millis() + config.card_unlock_time;
+      buzzer.beep(100, 1000);
     }
   }
   if (obj.containsKey("exit_active")) {
