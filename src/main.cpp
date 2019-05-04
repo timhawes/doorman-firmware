@@ -318,9 +318,12 @@ void send_file_info(const char *filename)
 void door_open_callback()
 {
   Serial.println("door-open");
-  if (config.exit_anti_bounce) {
+  if (config.anti_bounce) {
     if (state.exit_active) {
       state.exit_active = false;
+    }
+    if (state.card_active) {
+      state.card_active = false;
     }
   }
   state.door_open = true;

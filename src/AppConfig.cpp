@@ -14,9 +14,9 @@ void AppConfig::LoadDefaults() {
   strlcpy(ssid, "", sizeof(ssid));
   strlcpy(wpa_password, "", sizeof(wpa_password));
   allow_snib_on_battery = false;
+  anti_bounce = false;
   card_unlock_time = 5000;
   error_sounds = true;
-  exit_anti_bounce = false;
   exit_interactive_time = 0;
   exit_unlock_time = 5000;
   hold_exit_for_snib = false;
@@ -66,9 +66,9 @@ bool AppConfig::LoadJson(const char *filename) {
   root["wpa_password"].as<String>().toCharArray(wpa_password, sizeof(wpa_password));
 
   allow_snib_on_battery = root["allow_snib_on_battery"];
+  anti_bounce = root["anti_bounce"];
   card_unlock_time = root["card_unlock_time"];
   error_sounds = root["error_sounds"];
-  exit_anti_bounce = root["exit_anti_bounce"];
   exit_interactive_time = root["exit_interactive_time"];
   exit_unlock_time = root["exit_unlock_time"];
   hold_exit_for_snib = root["hold_exit_for_snib"];
