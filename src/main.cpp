@@ -324,6 +324,7 @@ void door_open_callback()
     }
     if (state.card_active) {
       state.card_active = false;
+      strncpy(state.user, "", sizeof(state.user));
     }
   }
   state.door_open = true;
