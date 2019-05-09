@@ -53,6 +53,7 @@ void NFC::loop()
       digitalWrite(_reset_pin, HIGH);
       delay(10);
       lastReset = millis();
+      reset_count++;
       _pn532->begin();
       uint32_t versiondata = _pn532->getFirmwareVersion();
       if (versiondata) {

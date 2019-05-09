@@ -773,6 +773,7 @@ void network_cmd_metrics_query(JsonObject &obj)
   reply["net_tx_buf_max"] = net.tx_buffer_high_watermark;
   reply["net_tx_delay_count"] = net.tx_delay_count;
   reply["net_wifi_reconns"] = net.wifi_reconnections;
+  reply["nfc_reset_count"] = nfc.reset_count;
   net.send_json(reply);
 }
 

@@ -29,6 +29,7 @@ public:
   bool read_counter = false;
   bool read_sig = false;
   int read_data = 0;
+  int reset_count = 0;
   void begin();
   void loop();
   bool debug = false;
