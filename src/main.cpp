@@ -74,6 +74,7 @@ struct State {
   bool door_open = false;
   bool network_up = false;
   char user[20] = "";
+  char uid[15] = "";
 } state;
 
 Ticker token_lookup_timer;
@@ -103,6 +104,7 @@ void send_state()
   obj["unlock"] = state.unlock_active;
   obj["voltage"] = state.voltage;
   obj["user"] = state.user;
+  obj["uid"] = state.uid;
   if (state.door_open) {
     obj["door"] = "open";
   } else {
@@ -140,6 +142,7 @@ void handle_timeouts()
     Serial.println("card unlock expired");
     state.card_active = false;
     strncpy(state.user, "", sizeof(state.user));
+    strncpy(state.uid, "", sizeof(state.uid));
     state.changed = true;
   }
   if (state.exit_active && millis() > state.exit_unlock_until) {
@@ -200,6 +203,7 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
       state.card_active = true;
       state.card_unlock_until = millis() + config.card_unlock_time;
       strncpy(state.user, name, sizeof(state.user));
+      strncpy(state.uid, uid, sizeof(state.uid));
       state.changed = true;
       buzzer.beep(100, 1000);
     } else {
@@ -213,7 +217,8 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
     if (tokendb.get_access_level() > 0) {
       state.card_active = true;
       state.card_unlock_until = millis() + config.card_unlock_time;
-      strncpy(state.user, uid, sizeof(state.user));
+      strncpy(state.user, tokendb.get_user().c_str(), sizeof(state.user));
+      strncpy(state.uid, uid, sizeof(state.uid));
       state.changed = true;
       buzzer.beep(100, 1000);
       return;
@@ -325,6 +330,7 @@ void door_open_callback()
     if (state.card_active) {
       state.card_active = false;
       strncpy(state.user, "", sizeof(state.user));
+      strncpy(state.uid, "", sizeof(state.uid));
     }
   }
   state.door_open = true;
@@ -854,6 +860,9 @@ void network_cmd_state_set(JsonObject &obj)
   }
   if (obj.containsKey("user")) {
     strncpy(state.user, obj["user"], sizeof(state.user));
+  }
+  if (obj.containsKey("uid")) {
+    strncpy(state.uid, obj["uid"], sizeof(state.uid));
   }
   if (obj.containsKey("snib_renew")) {
     if (state.snib_active) {
