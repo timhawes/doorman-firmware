@@ -75,6 +75,7 @@ struct State {
   bool network_up = false;
   char user[20] = "";
   char uid[15] = "";
+  enum { auth_none, auth_online, auth_offline } auth;
 } state;
 
 Ticker token_lookup_timer;
@@ -105,6 +106,17 @@ void send_state()
   obj["voltage"] = state.voltage;
   obj["user"] = state.user;
   obj["uid"] = state.uid;
+  switch (state.auth) {
+    case state.auth_none:
+      obj["auth"] = (char*)0;
+      break;
+    case state.auth_online:
+      obj["auth"] = "online";
+      break;
+    case state.auth_offline:
+      obj["auth"] = "offline";
+      break;
+  }
   if (state.door_open) {
     obj["door"] = "open";
   } else {
@@ -141,6 +153,7 @@ void handle_timeouts()
   if (state.card_active && millis() > state.card_unlock_until) {
     Serial.println("card unlock expired");
     state.card_active = false;
+    state.auth = state.auth_none;
     strncpy(state.user, "", sizeof(state.user));
     strncpy(state.uid, "", sizeof(state.uid));
     state.changed = true;
@@ -204,6 +217,7 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
       state.card_unlock_until = millis() + config.card_unlock_time;
       strncpy(state.user, name, sizeof(state.user));
       strncpy(state.uid, uid, sizeof(state.uid));
+      state.auth = state.auth_online;
       state.changed = true;
       buzzer.beep(100, 1000);
     } else {
@@ -219,6 +233,7 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
       state.card_unlock_until = millis() + config.card_unlock_time;
       strncpy(state.user, tokendb.get_user().c_str(), sizeof(state.user));
       strncpy(state.uid, uid, sizeof(state.uid));
+      state.auth = state.auth_offline;
       state.changed = true;
       buzzer.beep(100, 1000);
       return;
@@ -329,6 +344,7 @@ void door_open_callback()
     }
     if (state.card_active) {
       state.card_active = false;
+      state.auth = state.auth_none;
       strncpy(state.user, "", sizeof(state.user));
       strncpy(state.uid, "", sizeof(state.uid));
     }
