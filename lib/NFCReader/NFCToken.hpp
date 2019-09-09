@@ -1,6 +1,7 @@
 #ifndef NFCTOKEN_HPP
 #define NFCTOKEN_HPP
 
+#include <Arduino.h>
 #include <Wire.h>
 #include <PN532_I2C.h>
 #include <PN532.h>
