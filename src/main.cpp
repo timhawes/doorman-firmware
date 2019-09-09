@@ -890,6 +890,8 @@ void network_cmd_state_set(JsonObject &obj)
 
 void network_cmd_system_query(JsonObject &obj)
 {
+  FSInfo fs_info;
+  SPIFFS.info(fs_info);
   DynamicJsonBuffer jb;
   JsonObject &reply = jb.createObject();
   reply["cmd"] = "system_info";
@@ -912,6 +914,10 @@ void network_cmd_system_query(JsonObject &obj)
   reply["esp_reset_reason"] = ESP.getResetReason();
   reply["esp_reset_info"] = ESP.getResetInfo();
   reply["esp_cycle_count"] = ESP.getCycleCount();
+  reply["fs_total_bytes"] = fs_info.totalBytes;
+  reply["fs_used_bytes"] = fs_info.usedBytes;
+  reply["fs_block_size"] = fs_info.blockSize;
+  reply["fs_page_size"] = fs_info.pageSize;
   reply["millis"] = millis();
   net.send_json(reply);
 }
@@ -1005,7 +1011,9 @@ void setup()
   Serial.println(ESP.getSketchMD5());
 
   Wire.begin(sda_pin, scl_pin);
-  SPIFFS.begin();
+  if (!SPIFFS.begin()) {
+    Serial.println("SPIFFS.begin() failed");
+  }
 
   digitalWrite(prog_pin, HIGH);
   unsigned long start_time = millis();
