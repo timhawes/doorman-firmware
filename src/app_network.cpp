@@ -315,10 +315,9 @@ size_t Network::process_tx_buffer() {
       if (sendable < available) {
         available = sendable;
       }
-      char *out = new char[available];
+      char out[available];
       tx_buffer->read(out, available);
       size_t sent = client->write(out, available);
-      delete[] out;
       return sent;
     } else {
       Serial.println("network: send_tx_buffer() can't send yet");
