@@ -48,6 +48,7 @@ bool FirmwareWriter::Add(uint8_t *data, unsigned int len, unsigned int pos) {
       Serial.println("FirmwareWriter: new file won't fit into flash");
       return false;
     }
+    Update.runAsync(true);
     if (!Update.begin(_size, U_FLASH)) {
       Serial.println("FirmwareWriter: Update.begin() failed");
       Update.printError(Serial);
