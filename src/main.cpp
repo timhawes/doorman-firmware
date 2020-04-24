@@ -784,7 +784,10 @@ void network_cmd_metrics_query(JsonObject &obj)
   DynamicJsonBuffer jb;
   JsonObject &reply = jb.createObject();
   reply["cmd"] = "metrics_info";
+  reply["esp_free_cont_stack"] = ESP.getFreeContStack();
   reply["esp_free_heap"] = ESP.getFreeHeap();
+  reply["esp_heap_fragmentation"] = ESP.getHeapFragmentation();
+  reply["esp_max_free_block_size"] = ESP.getMaxFreeBlockSize();
   reply["millis"] = millis();
   reply["net_rx_buf_max"] = net.rx_buffer_high_watermark;
   reply["net_tcp_double_connect_errors"] = net.tcp_double_connect_errors;
