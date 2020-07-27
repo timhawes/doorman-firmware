@@ -1063,6 +1063,8 @@ void setup()
   voltagemonitor.on_mains_callback = on_mains_callback;
   voltagemonitor.voltage_callback = voltage_callback;
   voltagemonitor.begin();
+
+  buzzer.beep(50);
 }
 
 void loop() {
