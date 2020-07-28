@@ -134,7 +134,6 @@ void send_state()
 
 void check_leds()
 {
-  Serial.println("check_leds");
   if (state.card_active || state.exit_active) {
     led.flash_fast();
   } else if (state.snib_active || state.remote_active) {
