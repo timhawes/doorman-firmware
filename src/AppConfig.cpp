@@ -16,6 +16,7 @@ void AppConfig::LoadDefaults() {
   allow_snib_on_battery = false;
   anti_bounce = false;
   card_unlock_time = 5000;
+  dev = false;
   error_sounds = true;
   exit_interactive_time = 0;
   exit_unlock_time = 5000;
@@ -50,12 +51,13 @@ bool AppConfig::LoadJson(const char *filename) {
     return false;
   }
 
-  DynamicJsonBuffer jb;
-  JsonObject &root = jb.parseObject(file);
+  DynamicJsonDocument root(4096);
+  DeserializationError err = deserializeJson(root, file);
   file.close();
 
-  if (!root.success()) {
-    Serial.println("AppConfig: failed to parse JSON");
+  if (err) {
+    Serial.print("AppConfig: failed to parse JSON: ");
+    Serial.println(err.c_str());
     LoadOverrides();
     return false;
   }
@@ -68,6 +70,7 @@ bool AppConfig::LoadJson(const char *filename) {
   allow_snib_on_battery = root["allow_snib_on_battery"];
   anti_bounce = root["anti_bounce"];
   card_unlock_time = root["card_unlock_time"];
+  dev = root["dev"];
   error_sounds = root["error_sounds"];
   exit_interactive_time = root["exit_interactive_time"];
   exit_unlock_time = root["exit_unlock_time"];

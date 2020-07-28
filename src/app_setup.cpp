@@ -27,8 +27,7 @@ void SetupMode::configRootHandler() {
 }
 
 void SetupMode::configUpdateHandler() {
-  DynamicJsonBuffer jb;
-  JsonObject &root = jb.createObject();
+  DynamicJsonDocument root(4096);
   for (int i=0; i<server.args(); i++) {
     if (server.argName(i) == "ssid") root["ssid"] = server.arg(i);
     if (server.argName(i) == "wpa_password") root["wpa_password"] = server.arg(i);
@@ -38,7 +37,7 @@ void SetupMode::configUpdateHandler() {
     if (server.argName(i) == "server_password") root["server_password"] = server.arg(i);
   }
   File file = SPIFFS.open("config.json", "w");
-  root.printTo(file);
+  serializeJson(root, file);
   file.close();
   server.sendHeader("Location", "/");
   server.send(301);
