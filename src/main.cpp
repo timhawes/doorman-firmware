@@ -425,28 +425,28 @@ void wifi_connect_callback(const WiFiEventStationModeGotIP& event)
 {
   wifi_connected = true;
   state.network_up = wifi_connected && network_connected;
-  state.changed;
+  state.changed = true;
 }
 
 void wifi_disconnect_callback(const WiFiEventStationModeDisconnected& event)
 {
   wifi_connected = false;
   state.network_up = wifi_connected && network_connected;
-  state.changed;
+  state.changed = true;
 }
 
 void network_connect_callback()
 {
   network_connected = true;
   state.network_up = wifi_connected && network_connected;
-  state.changed;
+  state.changed = true;
 }
 
 void network_disconnect_callback()
 {
   network_connected = false;
   state.network_up = wifi_connected && network_connected;
-  state.changed;
+  state.changed = true;
 }
 
 void network_restart_callback(bool immediate, bool firmware)
