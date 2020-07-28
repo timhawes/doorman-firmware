@@ -703,25 +703,12 @@ void setup()
 
 void loop() {
   static unsigned long last_timeout_check = 0;
-  unsigned long loop_start_time;
-  unsigned long loop_run_time;
 
-  unsigned long start_time;
-  long t_display, t_nfc, t_inputs, t_adc;
-
-  loop_start_time = millis();
-
-  yield();
-  
-  start_time = millis();
   nfc.loop();
-  t_nfc = millis() - start_time;
   
   yield();
   
-  start_time = millis();
   inputs.loop();
-  t_inputs = millis() - start_time;
 
   yield();
 
@@ -737,16 +724,6 @@ void loop() {
   if (state.changed) {
     check_state();
     send_state();
-  }
-
-  yield();
-
-  loop_run_time = millis() - loop_start_time;
-  if (loop_run_time > 56) {
-    Serial.print("loop time "); Serial.print(loop_run_time, DEC); Serial.print("ms: ");
-    Serial.print("nfc="); Serial.print(t_nfc, DEC); Serial.print("ms ");
-    Serial.print("inputs="); Serial.print(t_inputs, DEC); Serial.print("ms ");
-    Serial.println();
   }
 
   yield();
@@ -785,7 +762,5 @@ void loop() {
     }
     delay(5000);
   }
-
-  yield();
 
 }
