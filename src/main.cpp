@@ -49,8 +49,6 @@ Relay relay(relay_pin);
 char pending_token[15];
 unsigned long pending_token_time = 0;
 
-unsigned long last_network_activity = 0;
-
 bool firmware_restart_pending = false;
 bool reset_pending = false;
 bool restart_pending = false;
@@ -297,6 +295,7 @@ void load_config()
                 config.server_fingerprint1, config.server_fingerprint2);
   net.setCred(clientid, config.server_password);
   net.setDebug(config.dev);
+  net.setWatchdog(config.network_watchdog_time);
   nfc.read_counter = config.nfc_read_counter;
   nfc.read_data = config.nfc_read_data;
   nfc.read_sig = config.nfc_read_sig;
@@ -591,8 +590,6 @@ void network_message_callback(const JsonDocument &obj)
 {
   String cmd = obj["cmd"];
 
-  last_network_activity = millis();
-
   if (cmd == "buzzer_beep") {
     network_cmd_buzzer_beep(obj);
   } else if (cmd == "buzzer_chirp") {
@@ -726,15 +723,6 @@ void loop() {
   }
 
   yield();
-
-  if (config.network_watchdog_time != 0) {
-    if (millis() - last_network_activity > config.network_watchdog_time) {
-      if (!restart_pending) {
-        Serial.println("network watchdog triggered, will restart when possible");
-        restart_pending = true;
-      }
-    }
-  }
 
   if (firmware_restart_pending) {
     Serial.println("restarting to complete firmware install...");
