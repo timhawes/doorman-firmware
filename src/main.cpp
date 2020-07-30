@@ -454,7 +454,7 @@ void network_restart_callback(bool immediate, bool firmware)
 
 void network_transfer_status_callback(const char *filename, int progress, bool active, bool changed)
 {
-  static unsigned int previous_progress = 0;
+  static int previous_progress = 0;
   if (strcmp("firmware", filename) == 0) {
     if (previous_progress != progress) {
       Serial.print("firmware install ");
