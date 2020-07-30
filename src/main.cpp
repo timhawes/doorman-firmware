@@ -9,8 +9,6 @@
 #include <base64.hpp>
 
 #include "AppConfig.hpp"
-#include "FileWriter.hpp"
-#include "FirmwareWriter.hpp"
 #include "Relay.hpp"
 #include "VoltageMonitor.hpp"
 #include "app_inputs.h"
