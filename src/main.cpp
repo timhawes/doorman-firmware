@@ -172,21 +172,15 @@ void handle_timeouts()
 
 void check_state()
 {
-  static bool previous_on_battery = false;
-  static bool first_run = true;
-  bool changed = false;
-
   if (state.card_active || state.exit_active || state.snib_active || state.remote_active) {
     if (!state.unlock_active) {
       relay.active(true);
       state.unlock_active = true;
-      changed = true;
     }
   } else {
     if (state.unlock_active) {
       relay.active(false);
       state.unlock_active = false;
-      changed = true;
     }
   }
 
