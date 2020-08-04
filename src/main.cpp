@@ -19,10 +19,9 @@
 #include "config.h"
 #include "tokendb.hpp"
 
-const uint8_t buzzer_pin = 0;
+const uint8_t prog_buzzer_pin = 0;
 const uint8_t door_pin = 14;
 const uint8_t exit_pin = 4;
-const uint8_t prog_pin = 0;
 const uint8_t led_pin = 16;
 const uint8_t pn532_reset_pin = 2;
 const uint8_t relay_pin = 15;
@@ -38,7 +37,7 @@ PN532_I2C pn532i2c(Wire);
 PN532 pn532(pn532i2c);
 NFC nfc(pn532i2c, pn532, pn532_reset_pin);
 NetThing net;
-Buzzer buzzer(buzzer_pin, true);
+Buzzer buzzer(prog_buzzer_pin, true);
 Inputs inputs(door_pin, exit_pin, snib_pin);
 VoltageMonitor voltagemonitor;
 Led led(led_pin);
@@ -609,11 +608,11 @@ void network_message_callback(const JsonDocument &obj)
 
 void setup()
 {
-  pinMode(buzzer_pin, OUTPUT);
   pinMode(pn532_reset_pin, OUTPUT);
-
-  digitalWrite(buzzer_pin, LOW);
   digitalWrite(pn532_reset_pin, HIGH);
+
+  // initial use of the shared pin will be for detecting setup mode
+  pinMode(prog_buzzer_pin, INPUT_PULLUP);
 
   snprintf(clientid, sizeof(clientid), "doorman-%06x", ESP.getChipId());
   WiFi.hostname(String(clientid));
@@ -636,16 +635,20 @@ void setup()
     Serial.println("SPIFFS.begin() failed");
   }
 
-  digitalWrite(prog_pin, HIGH);
   unsigned long start_time = millis();
   while (millis() - start_time < 500) {
-    if (digitalRead(prog_pin) == LOW) {
+    if (digitalRead(prog_buzzer_pin) == LOW) {
       Serial.println("prog button pressed, going into setup mode");
       SetupMode setup_mode(clientid, setup_password);
       setup_mode.run();
       ESP.restart();
     }
   }
+
+  // setup mode detection finished
+  // configure for buzzer output and default LOW to silence PSU noise
+  pinMode(prog_buzzer_pin, OUTPUT);
+  digitalWrite(prog_buzzer_pin, LOW);
 
   if (SPIFFS.exists("config.json")) {
     load_config();
@@ -685,8 +688,6 @@ void setup()
   voltagemonitor.on_mains_callback = on_mains_callback;
   voltagemonitor.voltage_callback = voltage_callback;
   voltagemonitor.begin();
-
-  buzzer.beep(50);
 }
 
 void loop() {
