@@ -11,7 +11,7 @@ void Led::callback() {
     ticker.once_ms(off_time, std::bind(&Led::callback, this));
   } else {
     is_on = !is_on;
-    analogWrite(led_pin, 1023);
+    analogWrite(led_pin, bright_level);
     ticker.once_ms(on_time, std::bind(&Led::callback, this));
   }
 }
@@ -26,7 +26,7 @@ void Led::on() {
   }
   mode = MODE_ON;
   ticker.detach();
-  analogWrite(led_pin, 1023);
+  analogWrite(led_pin, bright_level);
   is_on = true;
 }
 
@@ -90,5 +90,19 @@ void Led::dim() {
   }
   mode = MODE_DIM;
   ticker.detach();
-  analogWrite(led_pin, 150);
+  analogWrite(led_pin, dim_level);
+}
+
+void Led::setDimLevel(int level) {
+  dim_level = level;
+  if (mode == MODE_DIM) {
+    analogWrite(led_pin, dim_level);
+  }
+}
+
+void Led::setBrightLevel(int level) {
+  bright_level = level;
+  if (mode == MODE_ON) {
+    analogWrite(led_pin, bright_level);
+  }
 }

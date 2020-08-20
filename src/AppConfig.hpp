@@ -26,6 +26,8 @@ class AppConfig {
   int card_unlock_time;
   int exit_interactive_time;
   int exit_unlock_time;
+  int led_dim;
+  int led_bright;
   int long_press_time;
   int network_watchdog_time;
   int nfc_read_data;

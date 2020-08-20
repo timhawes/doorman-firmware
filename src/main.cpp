@@ -280,6 +280,8 @@ void load_config()
 {
   config.LoadJson();
   inputs.set_long_press_time(config.long_press_time);
+  led.setDimLevel(config.led_dim);
+  led.setBrightLevel(config.led_bright);
   net.setWiFi(config.ssid, config.wpa_password);
   net.setServer(config.server_host, config.server_port,
                 config.server_tls_enabled, config.server_tls_verify,
