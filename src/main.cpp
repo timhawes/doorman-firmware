@@ -292,6 +292,10 @@ void load_config()
   nfc.read_counter = config.nfc_read_counter;
   nfc.read_data = config.nfc_read_data;
   nfc.read_sig = config.nfc_read_sig;
+  nfc.pn532_check_interval = config.nfc_check_interval;
+  nfc.pn532_reset_interval = config.nfc_reset_interval;
+  nfc.per_5s_limit = config.nfc_5s_limit;
+  nfc.per_1m_limit = config.nfc_1m_limit;
   relay.setInvert(config.invert_relay);
   voltagemonitor.set_interval(config.voltage_check_interval);
   voltagemonitor.set_ratio(config.voltage_multiplier);
@@ -515,6 +519,7 @@ void network_cmd_metrics_query(const JsonDocument &obj)
   reply["cmd"] = "metrics_info";
   reply["millis"] = millis();
   reply["nfc_reset_count"] = nfc.reset_count;
+  reply["nfc_token_count"] = nfc.token_count;
   reply.shrinkToFit();
   net.sendJson(reply);
 }

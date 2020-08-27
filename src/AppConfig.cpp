@@ -29,6 +29,10 @@ void AppConfig::LoadDefaults() {
   nfc_read_counter = false;
   nfc_read_data = 0;
   nfc_read_sig = false;
+  nfc_check_interval = 10000;
+  nfc_reset_interval = 1000;
+  nfc_5s_limit = 30;
+  nfc_1m_limit = 60;
   remote_unlock_time = 86400000;
   server_port = 14260;
   server_tls_enabled = false;
@@ -82,9 +86,13 @@ bool AppConfig::LoadJson(const char *filename) {
   led_bright = root["led_bright"] | 1023;
   long_press_time = root["long_press_time"];
   network_watchdog_time = root["network_watchdog_time"];
-  nfc_read_counter = root["nfc_read_counter"];
-  nfc_read_data = root["nfc_read_data"];
-  nfc_read_sig = root["nfc_read_sig"];
+  nfc_read_counter = root["nfc_read_counter"] | false;
+  nfc_read_data = root["nfc_read_data"] | 0;
+  nfc_read_sig = root["nfc_read_sig"] | false;
+  nfc_check_interval = root["nfc_check_interval"] | 10000;
+  nfc_reset_interval = root["nfc_reset_interval"] | 1000;
+  nfc_5s_limit = root["nfc_5s_limit"] | 30;
+  nfc_1m_limit = root["nfc_1m_limit"] | 60;
   remote_unlock_time = root["remote_unlock_time"];
   server_port = root["server_port"];
   server_tls_enabled = root["server_tls_enabled"];

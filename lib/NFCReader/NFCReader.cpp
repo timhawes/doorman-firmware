@@ -26,54 +26,55 @@ void NFC::begin()
 void NFC::loop()
 {
   static boolean ready = false;
-  static unsigned long lastTest = 0;
-  static unsigned long lastReset = 0;
+  static unsigned long last_check = 0;
+  static unsigned long last_reset = 0;
   static NFCToken last_token1;
   static NFCToken last_token2;
 
   // periodically check that the PN532 is responsive
   if (ready) {
-    if (millis() > lastTest + pn532_check_interval) {
+    if (millis() - last_check > pn532_check_interval) {
+      //Serial.println("NFCReader: checking PN532");
       uint32_t versiondata = _pn532->getFirmwareVersion();
       if (versiondata) {
-        lastTest = millis();
+        last_check = millis();
+        //Serial.println("NFCReader: PN532 is okay");
       } else {
-        Serial.println("PN532 is not responding");
+        Serial.println("NFCReader: PN532 is not responding");
         // unset the ready flag
         ready = false;
+        if (reader_status_callback) {
+          reader_status_callback(ready);
+        }
       }
     }
   }
 
   if (!ready) {
-    if (millis() - lastReset > pn532_check_interval) {
-      Serial.println("Resetting NFC");
+    if (millis() - last_reset > pn532_reset_interval) {
+      Serial.println("NFCReader: resetting PN532");
       digitalWrite(_reset_pin, LOW);
       delay(10);
       digitalWrite(_reset_pin, HIGH);
       delay(10);
-      lastReset = millis();
+      last_reset = millis();
       reset_count++;
       _pn532->begin();
       uint32_t versiondata = _pn532->getFirmwareVersion();
       if (versiondata) {
-        Serial.print("PN5");
+        Serial.print("NFCReader: PN5");
         Serial.print((versiondata >> 24) & 0xFF, HEX);
         Serial.print(" ");
         Serial.print("V");
         Serial.print((versiondata >> 16) & 0xFF, DEC);
         Serial.print('.');
         Serial.print((versiondata >> 8) & 0xFF, DEC);
-        ready = true;
-        pn532_check_interval = pn532_check_interval_min;
       } else {
-        pn532_check_interval *= 2;
-        if (pn532_check_interval > pn532_check_interval_max) {
-          pn532_check_interval = pn532_check_interval_max;
-        }
+        // getFirmwareVersion failed, not ready
         return;
       }
     } else {
+      // wait for reset interval to expire before trying again, not ready
       return;
     }
 
@@ -99,6 +100,9 @@ void NFC::loop()
 
     Serial.println(" ready");
     ready = true;
+    if (reader_status_callback) {
+      reader_status_callback(ready);
+    }
   }
 
   uint8_t packet_buffer[64];
@@ -106,7 +110,7 @@ void NFC::loop()
   packet_buffer[1] = 1;
   packet_buffer[2] = PN532_MIFARE_ISO14443A;
   _pn532i2c->writeCommand(packet_buffer, 3);
-  uint16_t response_len = _pn532i2c->readResponse(packet_buffer, sizeof(packet_buffer), 50);
+  int response_len = _pn532i2c->readResponse(packet_buffer, sizeof(packet_buffer), 50);
 
   if (response_len > 0) {
     if (packet_buffer[0] > 0) {
@@ -209,9 +213,22 @@ void NFC::loop()
           last_token2.setSeen();
         }
 
+        per_5s_count++;
+        per_1m_count++;
+        token_count++;
+
         if (token_present_callback) {
           token_present_callback(current);
         }
+      }
+    }
+  } else if (response_len < 0) {
+    Serial.print("NFCReader: PN532 InListPassiveTarget returned ");
+    Serial.println(response_len, DEC);
+    if (ready) {
+      ready = false;
+      if (reader_status_callback) {
+        reader_status_callback(ready);
       }
     }
   }
@@ -234,6 +251,40 @@ void NFC::loop()
       token_removed_callback(last_token2);
     }
     last_token2.clear();
+  }
+
+  if (millis() - per_5s_last_time > 5000) {
+    per_5s_count = 0;
+    per_5s_last_time = millis();
+  }
+
+  if (millis() - per_1m_last_time > 60000) {
+    per_1m_count = 0;
+    per_1m_last_time = millis();
+  }
+
+  if (per_5s_count > per_5s_limit) {
+    Serial.println("NFCReader: 5 second limit exceeded");
+    if (ready) {
+      ready = false;
+      if (reader_status_callback) {
+        reader_status_callback(ready);
+      }
+    }
+    per_5s_count = 0;
+    per_5s_last_time = millis();
+  }
+
+  if (per_1m_count > per_1m_limit) {
+    Serial.println("NFCReader: 1 minute limit exceeded");
+    if (ready) {
+      ready = false;
+      if (reader_status_callback) {
+        reader_status_callback(ready);
+      }
+    }
+    per_1m_count = 0;
+    per_1m_last_time = millis();
   }
 
 }
