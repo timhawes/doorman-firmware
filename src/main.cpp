@@ -638,8 +638,17 @@ void setup()
   Serial.println(ESP.getSketchMD5());
 
   Wire.begin(sda_pin, scl_pin);
-  if (!SPIFFS.begin()) {
-    Serial.println("SPIFFS.begin() failed");
+
+  Serial.print("SPIFFS: ");
+  if (SPIFFS.begin()) {
+    FSInfo fs_info;
+    SPIFFS.info(fs_info);
+    Serial.print("ready, used=");
+    Serial.print(fs_info.usedBytes, DEC);
+    Serial.print(" total=");
+    Serial.println(fs_info.totalBytes, DEC);
+  } else {
+    Serial.println("failed");
   }
 
   unsigned long start_time = millis();
