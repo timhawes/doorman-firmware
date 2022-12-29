@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2018 Tim Hawes
+//
+// SPDX-License-Identifier: MIT
+
 #include "tokendb.hpp"
 #include "app_util.h"
 

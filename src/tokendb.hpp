@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2018 Tim Hawes
+//
+// SPDX-License-Identifier: MIT
+
 #ifndef TOKENDB_HPP
 #define TOKENDB_HPP
 

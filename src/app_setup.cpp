@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2017-2020 Tim Hawes
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "app_setup.h"
 #include <FS.h>
 #include <ArduinoJson.h>

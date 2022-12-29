@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019-2020 Tim Hawes
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef APPCONFIG_HPP
 #define APPCONFIG_HPP
 

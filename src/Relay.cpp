@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019 Tim Hawes
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "Relay.hpp"
 
 Relay::Relay(int _pin) {

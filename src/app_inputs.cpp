@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019 Tim Hawes
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "app_inputs.h"
 
 Inputs::Inputs(int door_pin, int exit_pin, int snib_pin)

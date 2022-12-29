@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019 Tim Hawes
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef APP_INPUTS_H
 #define APP_INPUTS_H
 

@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2019-2020 Tim Hawes
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <FS.h>
