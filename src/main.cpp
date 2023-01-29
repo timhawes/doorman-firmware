@@ -241,7 +241,7 @@ void token_present(NFCToken token)
   Serial.print("token_present: ");
   Serial.println(token.uidString());
   buzzer.beep(100, 500);
-  
+
   DynamicJsonDocument obj(2048);
   obj["cmd"] = "token_auth";
   obj["uid"] = token.uidString();
@@ -266,7 +266,7 @@ void token_present(NFCToken token)
     obj["read_time"] = token.read_time;
   }
   obj.shrinkToFit();
-  
+
   strncpy(pending_token, token.uidString().c_str(), sizeof(pending_token));
   token_lookup_timer.once_ms(config.token_query_timeout, std::bind(&token_info_callback, pending_token, false, "", 0));
 
@@ -714,15 +714,15 @@ void loop() {
   static unsigned long last_timeout_check = 0;
 
   nfc.loop();
-  
+
   yield();
-  
+
   inputs.loop();
 
   yield();
 
   net.loop();
-  
+
   yield();
 
   if (millis() - last_timeout_check > 200) {

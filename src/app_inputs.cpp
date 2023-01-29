@@ -30,7 +30,7 @@ void Inputs::loop()
     if (door_input->rose() && door_open_callback) door_open_callback();
     if (door_input->fell() && door_close_callback) door_close_callback();
   }
-  
+
   exit_input->update();
   if (exit_input->rose() && exit_release_callback) exit_release_callback();
   if (exit_input->fell() && exit_press_callback) exit_press_callback();
