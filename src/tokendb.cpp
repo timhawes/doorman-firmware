@@ -32,8 +32,8 @@ bool TokenDB::query_v1(File file, uint8_t uidlen, uint8_t *uid) {
 }
 
 bool TokenDB::query_v2(File file, uint8_t uidlen, uint8_t *uid) {
-  size_t hash_bytes = file.read();
-  size_t salt_length = file.read();
+  int hash_bytes = file.read();
+  int salt_length = file.read();
   char salt[salt_length+1];
 
   if (salt_length > 0) {

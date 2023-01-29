@@ -10,11 +10,11 @@ int decode_hex(const char *hexstr, uint8_t *bytes, size_t max_len)
   if (strlen(hexstr) % 2 != 0) {
     return 0;
   }
-  int bytelen = strlen(hexstr) / 2;
+  unsigned int bytelen = strlen(hexstr) / 2;
   if (bytelen > max_len) {
     return 0;
   }
-  for (int i=0; i<bytelen; i++) {
+  for (unsigned int i=0; i<bytelen; i++) {
     uint8_t ms = hexstr[i*2];
     uint8_t ls = hexstr[(i*2)+1];
     if (ms >= 'a') {
