@@ -502,7 +502,7 @@ void network_cmd_buzzer_click(const JsonDocument &obj)
 
 void network_cmd_buzzer_tune(const JsonDocument &obj)
 {
-  const char *b64 = obj["data"].as<char*>();
+  const char *b64 = obj["data"].as<const char*>();
   unsigned int binary_length = decode_base64_length((unsigned char*)b64);
   uint8_t binary[binary_length];
   binary_length = decode_base64((unsigned char*)b64, binary);
