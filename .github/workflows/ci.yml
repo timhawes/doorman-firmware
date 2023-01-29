@@ -39,5 +39,5 @@ jobs:
       run: echo "TODAY=$(date +'%Y%m%d')" >> $GITHUB_ENV
     - uses: actions/upload-artifact@v3
       with:
-        name: firmware-$TODAY-git-${{github.sha}}.bin
+        name: firmware-${{env.TODAY}}-git-${{github.sha}}.bin
         path: .pio/build/esp12e/firmware.bin
