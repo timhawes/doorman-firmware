@@ -37,7 +37,8 @@ jobs:
       run: pio run
     - name: Create timestamp for artifact
       run: echo "TODAY=$(date +'%Y%m%d')" >> $GITHUB_ENV
+    - name: Rename the artifact file
+      run: cp .pio/build/esp12e/firmware.bin .pio/build/esp12e/firmware-${{env.TODAY}}-git-${{github.sha}}.bin
     - uses: actions/upload-artifact@v3
       with:
-        name: firmware-${{env.TODAY}}-git-${{github.sha}}.bin
-        path: .pio/build/esp12e/firmware.bin
+        path: firmware-${{env.TODAY}}-git-${{github.sha}}.bin
