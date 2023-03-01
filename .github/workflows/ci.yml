@@ -41,4 +41,4 @@ jobs:
       run: cp .pio/build/esp12e/firmware.bin .pio/build/esp12e/firmware-${{env.TODAY}}-git-${{github.sha}}.bin
     - uses: actions/upload-artifact@v3
       with:
-        path: firmware-${{env.TODAY}}-git-${{github.sha}}.bin
+        path: .pio/build/esp12e/firmware-${{env.TODAY}}-git-${{github.sha}}.bin
