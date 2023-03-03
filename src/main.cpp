@@ -179,11 +179,13 @@ void check_state()
     if (!state.unlock_active) {
       relay.active(true);
       state.unlock_active = true;
+      net.sendEvent("unlocked");
     }
   } else {
     if (state.unlock_active) {
       relay.active(false);
       state.unlock_active = false;
+      net.sendEvent("locked");
     }
   }
 
@@ -212,8 +214,10 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
       state.auth = state.auth_online;
       state.changed = true;
       buzzer.beep(100, 1000);
+      net.sendEvent("auth", 128, "uid=%s user=%s type=online access=granted", state.uid, state.user);
     } else {
       buzzer.beep(500, 256);
+      net.sendEvent("auth", 128, "uid=%s user=%s type=online access=denied", uid, name);
     }
     return;
   }
@@ -228,11 +232,15 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
       state.auth = state.auth_offline;
       state.changed = true;
       buzzer.beep(100, 1000);
+      net.sendEvent("auth", 128, "uid=%s user=%s type=offline access=granted", uid, state.user);
       return;
     }
   }
 
   buzzer.beep(500, 256);
+
+  net.sendEvent("auth", 128, "uid=%s user=%s type=offline access=denied", uid, name);
+
   return;
 }
 
@@ -272,6 +280,7 @@ void token_present(NFCToken token)
 
   pending_token_time = millis();
   net.sendJson(obj, true);
+  net.sendEvent("token", 64, "uid=%s", pending_token);
 }
 
 void token_removed(NFCToken token)
@@ -323,6 +332,7 @@ void door_open_callback()
   }
   state.door_open = true;
   state.changed = true;
+  net.sendEvent("door_open");
 }
 
 void door_close_callback()
@@ -330,6 +340,7 @@ void door_close_callback()
   Serial.println("door-close");
   state.door_open = false;
   state.changed = true;
+  net.sendEvent("door_closed");
 }
 
 void exit_press_callback()
@@ -339,6 +350,9 @@ void exit_press_callback()
     state.exit_active = true;
     state.exit_unlock_until = millis() + config.exit_unlock_time;
     state.changed = true;
+    net.sendEvent("exit_request");
+  } else {
+    net.sendEvent("exit_request_ignored");
   }
 }
 
@@ -351,6 +365,7 @@ void exit_longpress_callback()
       state.snib_active = false;
       state.exit_active = false;
       state.changed = true;
+      net.sendEvent("snib_on");
     } else {
       if (state.snib_enable && (state.on_battery == false || config.allow_snib_on_battery)) {
         buzzer.beep(100, 1000);
@@ -358,6 +373,7 @@ void exit_longpress_callback()
         state.snib_unlock_until = millis () + config.snib_unlock_time;
         state.exit_active = false;
         state.changed = true;
+        net.sendEvent("snib_on");
       }
     }
   }
@@ -381,11 +397,13 @@ void snib_press_callback()
   if (state.snib_active) {
     state.snib_active = false;
     state.changed = true;
+    net.sendEvent("snib_off");
   } else {
     if (state.snib_enable && (state.on_battery == false || config.allow_snib_on_battery)) {
       state.snib_active = true;
       state.snib_unlock_until = millis () + config.snib_unlock_time;
       state.changed = true;
+      net.sendEvent("snib_on");
     }
   }
 }
@@ -405,6 +423,7 @@ void on_battery_callback()
   Serial.println("on battery");
   state.on_battery = true;
   state.changed = true;
+  net.sendEvent("power_battery");
 }
 
 void on_mains_callback()
@@ -412,6 +431,7 @@ void on_mains_callback()
   Serial.println("on mains");
   state.on_battery = false;
   state.changed = true;
+  net.sendEvent("power_mains");
 }
 
 void voltage_callback(float voltage)
