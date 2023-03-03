@@ -35,10 +35,14 @@ jobs:
         pre-commit run --all-files
     - name: Build PlatformIO Project
       run: pio run
-    - name: Create timestamp for artifact
-      run: echo "TODAY=$(date +'%Y%m%d')" >> $GITHUB_ENV
-    - name: Rename the artifact file
-      run: cp .pio/build/esp12e/firmware.bin .pio/build/esp12e/firmware-${{env.TODAY}}-git-${{github.sha}}.bin
+    - name: Prepare variables to name the artifact
+      run: |
+        echo "TODAY=$(date +'%Y%m%d')" >> $GITHUB_ENV
+        echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+        echo "BIN_MD5=$(md5sum .pio/build/esp12e/firmware.bin | cut -d' ' -f1)" >>$GITHUB_ENV
+    - name: Rename the artifact
+      run: |
+        cp .pio/build/esp12e/firmware.bin doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.bin
     - uses: actions/upload-artifact@v3
       with:
-        path: .pio/build/esp12e/firmware-${{env.TODAY}}-git-${{github.sha}}.bin
+        path: doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.bin
