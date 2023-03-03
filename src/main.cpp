@@ -95,11 +95,15 @@ void send_state()
   obj["cmd"] = "state_info";
   obj["card_enable"] = state.card_enable;
   obj["card_active"] = state.card_active;
+  obj["card_unlock_until"] = state.card_unlock_until;
   obj["exit_enable"] = state.exit_enable;
   obj["exit_active"] = state.exit_active;
+  obj["exit_unlock_until"] = state.exit_unlock_until;
   obj["snib_enable"] = state.snib_enable;
   obj["snib_active"] = state.snib_active;
+  obj["snib_unlock_until"] = state.snib_unlock_until;
   obj["remote_active"] = state.remote_active;
+  obj["remote_unlock_until"] = state.remote_unlock_until;
   obj["unlock"] = state.unlock_active;
   obj["voltage"] = state.voltage;
   obj["user"] = state.user;
