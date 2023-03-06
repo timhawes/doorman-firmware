@@ -369,7 +369,7 @@ void exit_longpress_callback()
       state.snib_active = false;
       state.exit_active = false;
       state.changed = true;
-      net.sendEvent("snib_on");
+      net.sendEvent("snib_off");
     } else {
       if (state.snib_enable && (state.on_battery == false || config.allow_snib_on_battery)) {
         buzzer.beep(100, 1000);
