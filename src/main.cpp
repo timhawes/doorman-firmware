@@ -732,10 +732,14 @@ void setup()
   voltagemonitor.on_mains_callback = on_mains_callback;
   voltagemonitor.voltage_callback = voltage_callback;
   voltagemonitor.begin();
+
+  ESP.wdtDisable();
 }
 
 void loop() {
   static unsigned long last_timeout_check = 0;
+
+  ESP.wdtFeed();
 
   nfc.loop();
 
