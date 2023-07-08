@@ -183,12 +183,14 @@ void check_state()
     if (!state.unlock_active) {
       relay.active(true);
       state.unlock_active = true;
+      Serial.println("unlocked");
       net.sendEvent("unlocked");
     }
   } else {
     if (state.unlock_active) {
       relay.active(false);
       state.unlock_active = false;
+      Serial.println("locked");
       net.sendEvent("locked");
     }
   }
