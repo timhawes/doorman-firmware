@@ -54,6 +54,7 @@ bool disable_watchdog_feed = false;
 bool jam_loop = false;
 volatile unsigned int loop_count = 0;
 volatile unsigned int loop_position = 0;
+int crash_loop_position = -1;
 Ticker loop_monitor;
 
 bool firmware_restart_pending = false;
@@ -556,6 +557,9 @@ void network_cmd_metrics_query(const JsonDocument &obj)
   reply["millis"] = millis();
   reply["nfc_reset_count"] = nfc.reset_count;
   reply["nfc_token_count"] = nfc.token_count;
+  if (crash_loop_position != -1) {
+    reply["crash_loop_position"] = crash_loop_position;
+  }
   reply.shrinkToFit();
   net.sendJson(reply);
 }
@@ -661,6 +665,14 @@ void loop_check_callback() {
   }
 
   if (millis() - last_change > 10000) {
+    uint32_t tmp = 0x42424200 | loop_position;
+    Serial.print("writing rtcmem=");
+    Serial.println(tmp, HEX);
+    if (ESP.rtcUserMemoryWrite(4, &tmp, 4)) {
+      Serial.println("OK");
+    } else {
+      Serial.println("FAILED");
+    }
     Serial.print("loop_check_callback: loop() is stuck for 10 seconds, loop_position=");
     Serial.print(loop_position, DEC);
     Serial.println(", triggering hardware watchdog");
@@ -692,6 +704,17 @@ void setup()
   Serial.print(clientid);
   Serial.print(" ");
   Serial.println(ESP.getSketchMD5());
+
+  uint32_t tmp;
+  ESP.rtcUserMemoryRead(4, &tmp, 4);
+  if ((tmp & 0xFFFFFF00) == 0x42424200) {
+    uint8_t tmp2 = tmp & 0xFF;
+    Serial.print("loop_position=");
+    Serial.println(tmp2, DEC);
+    crash_loop_position = tmp2;
+    tmp = 0;
+    ESP.rtcUserMemoryWrite(4, &tmp, 4);
+  }
 
   Wire.begin(sda_pin, scl_pin);
 
