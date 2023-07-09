@@ -50,6 +50,12 @@ Relay relay(relay_pin);
 char pending_token[15];
 unsigned long pending_token_time = 0;
 
+bool disable_watchdog_feed = false;
+bool jam_loop = false;
+volatile unsigned int loop_count = 0;
+volatile unsigned int loop_position = 0;
+Ticker loop_monitor;
+
 bool firmware_restart_pending = false;
 bool reset_pending = false;
 bool restart_pending = false;
@@ -634,12 +640,32 @@ void network_message_callback(const JsonDocument &obj)
     network_cmd_state_set(obj);
   } else if (cmd == "token_info") {
     network_cmd_token_info(obj);
+  } else if (cmd == "test_jam_loop") {
+    jam_loop = true;
   } else {
     StaticJsonDocument<JSON_OBJECT_SIZE(3)> reply;
     reply["cmd"] = "error";
     reply["requested_cmd"] = cmd.c_str();
     reply["error"] = "not implemented";
     net.sendJson(reply);
+  }
+}
+
+void loop_check_callback() {
+  static unsigned int my_loop_count = 0;
+  static unsigned long last_change = 0;
+
+  if (loop_count != my_loop_count) {
+    last_change = millis();
+    my_loop_count = loop_count;
+  }
+
+  if (millis() - last_change > 10000) {
+    Serial.print("loop_check_callback: loop() is stuck for 10 seconds, loop_position=");
+    Serial.print(loop_position, DEC);
+    Serial.println(", triggering hardware watchdog");
+    ESP.wdtDisable();
+    while (1) {};
   }
 }
 
@@ -735,37 +761,42 @@ void setup()
   voltagemonitor.voltage_callback = voltage_callback;
   voltagemonitor.begin();
 
-  ESP.wdtDisable();
+  loop_monitor.attach(1, loop_check_callback);
 }
 
 void loop() {
   static unsigned long last_timeout_check = 0;
 
-  ESP.wdtFeed();
+  loop_count++;
+  loop_position = 1;
+
+  if (jam_loop) {
+    while (1) { delay(1); };
+  }
+
+  loop_position = 2;
+  loop_position = 3;
 
   nfc.loop();
-
-  yield();
-
+  loop_position = 4;
   inputs.loop();
-
-  yield();
-
+  loop_position = 5;
   net.loop();
-
-  yield();
+  loop_position = 6;
 
   if (millis() - last_timeout_check > 200) {
     handle_timeouts();
     last_timeout_check = millis();
   }
 
+  loop_position = 7;
+
   if (state.changed) {
     check_state();
     send_state();
   }
 
-  yield();
+  loop_position = 8;
 
   if (firmware_restart_pending) {
     Serial.println("restarting to complete firmware install...");
@@ -776,6 +807,8 @@ void loop() {
     ESP.restart();
     delay(5000);
   }
+
+  loop_position = 9;
 
   if (reset_pending || restart_pending) {
     Serial.println("rebooting at remote request...");
@@ -792,5 +825,7 @@ void loop() {
     }
     delay(5000);
   }
+
+  loop_position = 10;
 
 }
