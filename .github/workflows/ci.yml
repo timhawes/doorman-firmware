@@ -59,8 +59,11 @@ jobs:
           name: firmware
           path: firmware
       - name: Display structure of downloaded files
-        run: find . -ls
-        working-directory: firmware
+        run: find firmware -ls
       - name: Display MD5 hashes
-        run: md5sum *.bin
-        working-directory: firmware
+        run: md5sum firmware/*.bin
+      - name: Upload
+        run: |
+          umask 0077
+          echo ${{secrets.RSYNC_SSH_KEY}} >rsync_ssh_key
+          rsync -e "ssh -i rsync_ssh_key" firmware/* ${{secrets.RSYNC_SSH_PATH}}/
