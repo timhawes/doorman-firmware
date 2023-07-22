@@ -66,4 +66,4 @@ jobs:
         run: |
           umask 0077
           echo ${{secrets.RSYNC_SSH_KEY}} >rsync_ssh_key
-          rsync -e "ssh -i rsync_ssh_key" firmware/* ${{secrets.RSYNC_SSH_PATH}}/
+          sftp -i rsync_ssh_key firmware/* ${{secrets.RSYNC_SSH_PATH}}/
