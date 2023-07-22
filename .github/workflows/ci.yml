@@ -52,6 +52,9 @@ jobs:
 
   upload:
     needs: build
+    env:
+      ARTIFACT_URL: ${{vars.ARTIFACT_URL}}
+      ARTIFACT_KEY: ${{secrets.ARTIFACT_KEY}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
@@ -59,14 +62,15 @@ jobs:
           name: firmware
           path: firmware
       - name: Upload
+        if: ${{ env.ARTIFACT_URL != '' && env.ARTIFACT_KEY != '' }}
         run: |
           for filename in *; do
             curl \
               -X PUT \
-              --oauth2-bearer ${{secrets.ARTIFACT_KEY}} \
+              --oauth2-bearer $ARTIFACT_KEY \
               --header "Content-Type: application/octet-stream" \
               --data-binary @$filename \
               --fail \
-              ${{vars.ARTIFACT_URL}}/$filename
+              $ARTIFACT_URL/$filename
           done
         working-directory: firmware
