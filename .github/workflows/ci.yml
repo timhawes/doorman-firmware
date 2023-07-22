@@ -64,6 +64,11 @@ jobs:
         run: md5sum firmware/*.bin
       - name: Upload
         run: |
-          umask 0077
-          echo ${{secrets.RSYNC_SSH_KEY}} >rsync_ssh_key
-          sftp -i rsync_ssh_key firmware/* ${{secrets.RSYNC_SSH_PATH}}/
+          for filename in *; do
+            curl \
+              -X PUT \
+              --oauth2-bearer ${{secrets.ARTIFACT_KEY}} \
+              --header "Content-Type: application/octet-stream" \
+              --data-binary @$filename \
+              ${{vars.ARTIFACT_URL}}/$filename
+          done
