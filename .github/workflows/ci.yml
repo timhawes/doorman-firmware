@@ -58,10 +58,6 @@ jobs:
         with:
           name: firmware
           path: firmware
-      - name: Display structure of downloaded files
-        run: find firmware -ls
-      - name: Display MD5 hashes
-        run: md5sum firmware/*.bin
       - name: Upload
         run: |
           for filename in *; do
@@ -70,6 +66,7 @@ jobs:
               --oauth2-bearer ${{secrets.ARTIFACT_KEY}} \
               --header "Content-Type: application/octet-stream" \
               --data-binary @$filename \
+              --fail \
               ${{vars.ARTIFACT_URL}}/$filename
           done
         working-directory: firmware
