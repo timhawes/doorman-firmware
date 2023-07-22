@@ -42,7 +42,23 @@ jobs:
         echo "BIN_MD5=$(md5sum .pio/build/esp12e/firmware.bin | cut -d' ' -f1)" >>$GITHUB_ENV
     - name: Rename the artifact
       run: |
-        cp .pio/build/esp12e/firmware.bin doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.bin
+        mkdir firmware
+        cp .pio/build/esp12e/firmware.bin firmware/doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.bin
+        cp .pio/build/esp12e/firmware.elf firmware/doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.elf
     - uses: actions/upload-artifact@v3
       with:
-        path: doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.bin
+        path: firmware
+
+  upload:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: firmware
+      - name: Display structure of downloaded files
+        run: find . -ls
+        working-directory: firmware
+      - name: Display MD5 hashes
+        run: md5sum *.bin
+        working-directory: firmware
