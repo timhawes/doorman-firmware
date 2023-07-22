@@ -47,7 +47,8 @@ jobs:
         cp .pio/build/esp12e/firmware.elf firmware/doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.elf
     - uses: actions/upload-artifact@v3
       with:
-        path: firmware
+        name: firmware
+        path: firmware/
 
   upload:
     needs: build
@@ -56,6 +57,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: firmware
+          path: firmware
       - name: Display structure of downloaded files
         run: find . -ls
         working-directory: firmware
