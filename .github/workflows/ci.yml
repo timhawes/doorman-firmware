@@ -72,3 +72,4 @@ jobs:
               --data-binary @$filename \
               ${{vars.ARTIFACT_URL}}/$filename
           done
+        working-directory: firmware
