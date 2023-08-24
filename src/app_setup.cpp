@@ -14,7 +14,7 @@ static const char html[] PROGMEM =
     "<tr><th>WPA Password</th><td><input type='text' name='wpa_password' /></td></tr>\n"
     "<tr><th>Server Host</th><td><input type='text' name='server_host' /></td></tr>\n"
     "<tr><th>Server Port</th><td><input type='text' name='server_port' /></td></tr>\n"
-    "<tr><th>Server TLS</th><td><input type='checkbox' name='server_tls_enabled' value='1' /></td></tr>\n"
+    "<tr><th>Server TLS</th><td><input type='checkbox' name='server_tls' value='1' /></td></tr>\n"
     "<tr><th>Server Password</th><td><input type='text' name='server_password' /></td></tr>\n"
     "</table>\n"
     "<input type='submit' value='Save and Restart' />"
@@ -36,20 +36,6 @@ void SetupMode::configUpdateHandler() {
 
   for (int i=0; i<server.args(); i++) {
     if (server.argName(i) == "ssid") root["ssid"] = server.arg(i);
-    if (server.argName(i) == "wpa_password") root["wpa_password"] = server.arg(i);
-    if (server.argName(i) == "server_host") root["server_host"] = server.arg(i);
-    if (server.argName(i) == "server_port") root["server_port"] = server.arg(i).toInt();
-    if (server.argName(i) == "server_tls") root["server_tls"] = (bool)server.arg(i).toInt();
-    if (server.argName(i) == "server_password") root["server_password"] = server.arg(i);
-  }
-  file = SPIFFS.open("config.json", "w");
-  serializeJson(root, file);
-  file.close();
-
-  root.clear();
-
-  for (int i=0; i<server.args(); i++) {
-    if (server.argName(i) == "ssid") root["ssid"] = server.arg(i);
     if (server.argName(i) == "wpa_password") root["password"] = server.arg(i);
   }
   file = SPIFFS.open("wifi.json", "w");
@@ -66,6 +52,7 @@ void SetupMode::configUpdateHandler() {
   }
   file = SPIFFS.open("net.json", "w");
   serializeJson(root, file);
+  serializeJson(root, Serial);
   file.close();
 
   server.sendHeader("Location", "/");
