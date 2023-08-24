@@ -44,7 +44,6 @@ void SetupMode::configUpdateHandler() {
 
   root.clear();
 
-  root["tls"] = (bool)0;
   for (int i=0; i<server.args(); i++) {
     if (server.argName(i) == "server_host") root["host"] = server.arg(i);
     if (server.argName(i) == "server_port") root["port"] = server.arg(i).toInt();
