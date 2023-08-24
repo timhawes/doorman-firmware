@@ -342,7 +342,6 @@ void load_app_config()
 
 void load_config()
 {
-  config.LoadJson();
   load_wifi_config();
   load_net_config();
   load_app_config();
@@ -532,9 +531,6 @@ void network_transfer_status_callback(const char *filename, int progress, bool a
   }
   if (changed && strcmp("app.json", filename) == 0) {
     load_app_config();
-  }
-  if (changed && strcmp("config.json", filename) == 0) {
-    load_config();
   }
 }
 
@@ -773,7 +769,7 @@ void setup()
   pinMode(prog_buzzer_pin, OUTPUT);
   digitalWrite(prog_buzzer_pin, LOW);
 
-  if (SPIFFS.exists("config.json") || (SPIFFS.exists("wifi.json") && SPIFFS.exists("net.json"))) {
+  if (SPIFFS.exists("wifi.json") && SPIFFS.exists("net.json")) {
     load_config();
   } else {
     Serial.println("config is missing, entering setup mode");
