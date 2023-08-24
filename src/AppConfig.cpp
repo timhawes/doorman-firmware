@@ -110,9 +110,9 @@ bool AppConfig::LoadNetJson(const char *filename) {
 
   memset(server_fingerprint1, 0, sizeof(server_fingerprint1));
   memset(server_fingerprint2, 0, sizeof(server_fingerprint2));
-  decode_hex(root["fingerprint1"].as<String>().c_str(),
+  decode_hex(root["tls_fingerprint1"].as<String>().c_str(),
              server_fingerprint1, sizeof(server_fingerprint1));
-  decode_hex(root["fingerprint2"].as<String>().c_str(),
+  decode_hex(root["tls_fingerprint2"].as<String>().c_str(),
              server_fingerprint2, sizeof(server_fingerprint2));
 
   LoadOverrides();
