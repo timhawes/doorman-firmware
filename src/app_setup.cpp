@@ -32,6 +32,8 @@ void SetupMode::configRootHandler() {
 
 void SetupMode::configUpdateHandler() {
   DynamicJsonDocument root(4096);
+  File file;
+
   for (int i=0; i<server.args(); i++) {
     if (server.argName(i) == "ssid") root["ssid"] = server.arg(i);
     if (server.argName(i) == "wpa_password") root["wpa_password"] = server.arg(i);
@@ -40,9 +42,32 @@ void SetupMode::configUpdateHandler() {
     if (server.argName(i) == "server_tls") root["server_tls"] = (bool)server.arg(i).toInt();
     if (server.argName(i) == "server_password") root["server_password"] = server.arg(i);
   }
-  File file = SPIFFS.open("config.json", "w");
+  file = SPIFFS.open("config.json", "w");
   serializeJson(root, file);
   file.close();
+
+  root.clear();
+
+  for (int i=0; i<server.args(); i++) {
+    if (server.argName(i) == "ssid") root["ssid"] = server.arg(i);
+    if (server.argName(i) == "wpa_password") root["password"] = server.arg(i);
+  }
+  file = SPIFFS.open("wifi.json", "w");
+  serializeJson(root, file);
+  file.close();
+
+  root.clear();
+
+  for (int i=0; i<server.args(); i++) {
+    if (server.argName(i) == "server_host") root["host"] = server.arg(i);
+    if (server.argName(i) == "server_port") root["port"] = server.arg(i).toInt();
+    if (server.argName(i) == "server_tls") root["tls"] = (bool)server.arg(i).toInt();
+    if (server.argName(i) == "server_password") root["password"] = server.arg(i);
+  }
+  file = SPIFFS.open("net.json", "w");
+  serializeJson(root, file);
+  file.close();
+
   server.sendHeader("Location", "/");
   server.send(301);
   delay(500);

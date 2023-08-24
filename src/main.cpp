@@ -302,19 +302,30 @@ void token_removed(NFCToken token)
   Serial.println(token.uidString());
 }
 
-void load_config()
+void load_wifi_config()
 {
-  config.LoadJson();
-  inputs.set_long_press_time(config.long_press_time);
-  led.setDimLevel(config.led_dim);
-  led.setBrightLevel(config.led_bright);
+  config.LoadWifiJson();
   net.setWiFi(config.ssid, config.wpa_password);
+}
+
+void load_net_config()
+{
+  config.LoadNetJson();
   net.setServer(config.server_host, config.server_port,
                 config.server_tls_enabled, config.server_tls_verify,
                 config.server_fingerprint1, config.server_fingerprint2);
   net.setCred(clientid, config.server_password);
   net.setDebug(config.dev);
   net.setWatchdog(config.network_watchdog_time);
+}
+
+void load_app_config()
+{
+  config.LoadAppJson();
+  inputs.set_long_press_time(config.long_press_time);
+  led.setDimLevel(config.led_dim);
+  led.setBrightLevel(config.led_bright);
+  net.setDebug(config.dev);
   nfc.read_counter = config.nfc_read_counter;
   nfc.read_data = config.nfc_read_data;
   nfc.read_sig = config.nfc_read_sig;
@@ -327,6 +338,14 @@ void load_config()
   voltagemonitor.set_ratio(config.voltage_multiplier);
   voltagemonitor.set_threshold(config.voltage_falling_threshold, config.voltage_rising_threshold);
   state.changed = true;
+}
+
+void load_config()
+{
+  config.LoadJson();
+  load_wifi_config();
+  load_net_config();
+  load_app_config();
 }
 
 void door_open_callback()
@@ -504,6 +523,15 @@ void network_transfer_status_callback(const char *filename, int progress, bool a
       Serial.println("%");
       previous_progress = progress;
     }
+  }
+  if (changed && strcmp("wifi.json", filename) == 0) {
+    load_wifi_config();
+  }
+  if (changed && strcmp("net.json", filename) == 0) {
+    load_net_config();
+  }
+  if (changed && strcmp("app.json", filename) == 0) {
+    load_app_config();
   }
   if (changed && strcmp("config.json", filename) == 0) {
     load_config();
