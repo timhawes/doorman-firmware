@@ -52,7 +52,6 @@ void SetupMode::configUpdateHandler() {
   }
   file = SPIFFS.open("net.json", "w");
   serializeJson(root, file);
-  serializeJson(root, Serial);
   file.close();
 
   server.sendHeader("Location", "/");
