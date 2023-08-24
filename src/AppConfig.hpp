@@ -47,6 +47,9 @@ class AppConfig {
   uint8_t server_fingerprint1[21];
   uint8_t server_fingerprint2[21];
   void LoadDefaults();
+  bool LoadWifiJson(const char *filename = "wifi.json");
+  bool LoadNetJson(const char *filename = "net.json");
+  bool LoadAppJson(const char *filename = "app.json");
   bool LoadJson(const char *filename = "config.json");
   void LoadOverrides();
 };
