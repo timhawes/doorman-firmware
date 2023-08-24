@@ -724,10 +724,10 @@ void setup()
   pinMode(prog_buzzer_pin, OUTPUT);
   digitalWrite(prog_buzzer_pin, LOW);
 
-  if (SPIFFS.exists("config.json")) {
+  if (SPIFFS.exists("config.json") || (SPIFFS.exists("wifi.json") && SPIFFS.exists("net.json"))) {
     load_config();
   } else {
-    Serial.println("config.json is missing, entering setup mode");
+    Serial.println("config is missing, entering setup mode");
     net.stop();
     delay(1000);
     SetupMode setup_mode(clientid, setup_password);
