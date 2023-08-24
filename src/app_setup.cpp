@@ -62,6 +62,8 @@ void SetupMode::run() {
   // display access details
   Serial.print("WiFi AP: SSID=");
   Serial.print(_clientid);
+  Serial.print(" Password=");
+  Serial.print(_setup_password);
   Serial.print(" URL=http://");
   Serial.print(ip);
   Serial.println("/");
