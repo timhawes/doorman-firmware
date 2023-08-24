@@ -14,7 +14,7 @@ static const char html[] PROGMEM =
     "<tr><th>WPA Password</th><td><input type='text' name='wpa_password' /></td></tr>\n"
     "<tr><th>Server Host</th><td><input type='text' name='server_host' /></td></tr>\n"
     "<tr><th>Server Port</th><td><input type='text' name='server_port' /></td></tr>\n"
-    "<tr><th>Server TLS</th><td><input type='checkbox' name='server_tls' value='1' /></td></tr>\n"
+    "<tr><th>Server TLS</th><td><input type='checkbox' name='server_tls_enabled' value='1' /></td></tr>\n"
     "<tr><th>Server Password</th><td><input type='text' name='server_password' /></td></tr>\n"
     "</table>\n"
     "<input type='submit' value='Save and Restart' />"
@@ -47,7 +47,7 @@ void SetupMode::configUpdateHandler() {
   for (int i=0; i<server.args(); i++) {
     if (server.argName(i) == "server_host") root["host"] = server.arg(i);
     if (server.argName(i) == "server_port") root["port"] = server.arg(i).toInt();
-    if (server.argName(i) == "server_tls") root["tls"] = (bool)server.arg(i).toInt();
+    if (server.argName(i) == "server_tls_enabled") root["tls"] = (bool)server.arg(i).toInt();
     if (server.argName(i) == "server_password") root["password"] = server.arg(i);
   }
   file = SPIFFS.open("net.json", "w");
