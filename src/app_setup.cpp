@@ -14,7 +14,7 @@ static const char html[] PROGMEM =
     "<tr><th>WPA Password</th><td><input type='text' name='wpa_password' /></td></tr>\n"
     "<tr><th>Server Host</th><td><input type='text' name='server_host' /></td></tr>\n"
     "<tr><th>Server Port</th><td><input type='text' name='server_port' /></td></tr>\n"
-    "<tr><th>Server TLS</th><td><input type='checkbox' name='server_tls_enabled' /></td></tr>\n"
+    "<tr><th>Server TLS</th><td><input type='checkbox' name='server_tls_enabled' value='1' /></td></tr>\n"
     "<tr><th>Server Password</th><td><input type='text' name='server_password' /></td></tr>\n"
     "</table>\n"
     "<input type='submit' value='Save and Restart' />"
