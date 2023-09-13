@@ -21,6 +21,7 @@ void AppConfig::LoadDefaults() {
   anti_bounce = false;
   card_unlock_time = 5000;
   dev = false;
+  events = false;
   exit_interactive_time = 0;
   exit_unlock_time = 5000;
   hold_exit_for_snib = false;
@@ -143,6 +144,7 @@ bool AppConfig::LoadAppJson(const char *filename) {
   anti_bounce = root["anti_bounce"];
   card_unlock_time = root["card_unlock_time"];
   dev = root["dev"];
+  events = root["events"] | false;
   exit_interactive_time = root["exit_interactive_time"];
   exit_unlock_time = root["exit_unlock_time"];
   hold_exit_for_snib = root["hold_exit_for_snib"];
