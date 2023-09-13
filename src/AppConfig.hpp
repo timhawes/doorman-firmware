@@ -13,7 +13,6 @@ class AppConfig {
   bool allow_snib_on_battery;
   bool anti_bounce;
   bool dev;
-  bool error_sounds;
   bool hold_exit_for_snib;
   bool invert_relay; // false=fail-secure, true=fail-safe/maglocks
   bool nfc_read_counter;
