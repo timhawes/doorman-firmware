@@ -156,7 +156,7 @@ void check_leds()
 
 void handle_timeouts()
 {
-  if (state.card_active && millis() > state.card_unlock_until) {
+  if (state.card_active && (long)(millis() - state.card_unlock_until) > 0) {
     Serial.println("card unlock expired");
     state.card_active = false;
     state.auth = state.auth_none;
@@ -164,17 +164,17 @@ void handle_timeouts()
     strncpy(state.uid, "", sizeof(state.uid));
     state.changed = true;
   }
-  if (state.exit_active && millis() > state.exit_unlock_until) {
+  if (state.exit_active && (long)(millis() - state.exit_unlock_until) > 0) {
     Serial.println("exit unlock expired");
     state.exit_active = false;
     state.changed = true;
   }
-  if (state.snib_active && millis() > state.snib_unlock_until) {
+  if (state.snib_active && (long)(millis() - state.snib_unlock_until) > 0) {
     Serial.println("snib unlock expired");
     state.snib_active = false;
     state.changed = true;
   }
-  if (state.remote_active && millis() > state.remote_unlock_until) {
+  if (state.remote_active && (long)(millis() - state.remote_unlock_until) > 0) {
     Serial.println("remote unlock expired");
     state.remote_active = false;
     state.changed = true;
@@ -721,7 +721,7 @@ void setup()
   }
 
   unsigned long start_time = millis();
-  while (millis() - start_time < 500) {
+  while ((long)(millis() - start_time) < 500) {
     if (digitalRead(prog_buzzer_pin) == LOW) {
       Serial.println("prog button pressed, going into setup mode");
       SetupMode setup_mode(clientid, setup_password);
@@ -788,7 +788,7 @@ void loop() {
   inputs.loop();
   net.loop();
 
-  if (millis() - last_timeout_check > 200) {
+  if ((long)(millis() - last_timeout_check) > 200) {
     handle_timeouts();
     last_timeout_check = millis();
   }
