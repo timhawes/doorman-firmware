@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2019-2020 Tim Hawes
+// SPDX-FileCopyrightText: 2019-2023 Tim Hawes
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -13,6 +13,7 @@
 #include <base64.hpp>
 
 #include "AppConfig.hpp"
+#include "LoopWatchdog.hpp"
 #include "Relay.hpp"
 #include "VoltageMonitor.hpp"
 #include "app_inputs.h"
@@ -46,16 +47,12 @@ Inputs inputs(door_pin, exit_pin, snib_pin);
 VoltageMonitor voltagemonitor;
 Led led(led_pin);
 Relay relay(relay_pin);
+LoopWatchdog loopwatchdog;
 
 char pending_token[15];
 unsigned long pending_token_time = 0;
 
-bool disable_watchdog_feed = false;
 bool jam_loop = false;
-volatile unsigned int loop_count = 0;
-volatile unsigned int loop_position = 0;
-int crash_loop_position = -1;
-Ticker loop_monitor;
 
 bool firmware_restart_pending = false;
 bool reset_pending = false;
@@ -581,8 +578,8 @@ void network_cmd_metrics_query(const JsonDocument &obj)
   reply["millis"] = millis();
   reply["nfc_reset_count"] = nfc.reset_count;
   reply["nfc_token_count"] = nfc.token_count;
-  if (crash_loop_position != -1) {
-    reply["crash_loop_position"] = crash_loop_position;
+  if (loopwatchdog.restarted()) {
+    reply["restarted_by_loop_watchdog"] = true;
   }
   reply.shrinkToFit();
   net.sendJson(reply);
@@ -668,6 +665,8 @@ void network_message_callback(const JsonDocument &obj)
     network_cmd_state_set(obj);
   } else if (cmd == "token_info") {
     network_cmd_token_info(obj);
+  } else if (cmd == "test_jam") {
+    while (1) {};
   } else if (cmd == "test_jam_loop") {
     jam_loop = true;
   } else {
@@ -676,32 +675,6 @@ void network_message_callback(const JsonDocument &obj)
     reply["requested_cmd"] = cmd.c_str();
     reply["error"] = "not implemented";
     net.sendJson(reply);
-  }
-}
-
-void loop_check_callback() {
-  static unsigned int my_loop_count = 0;
-  static unsigned long last_change = 0;
-
-  if (loop_count != my_loop_count) {
-    last_change = millis();
-    my_loop_count = loop_count;
-  }
-
-  if (millis() - last_change > 10000) {
-    uint32_t tmp = 0x42424200 | loop_position;
-    Serial.print("writing rtcmem=");
-    Serial.println(tmp, HEX);
-    if (ESP.rtcUserMemoryWrite(4, &tmp, 4)) {
-      Serial.println("OK");
-    } else {
-      Serial.println("FAILED");
-    }
-    Serial.print("loop_check_callback: loop() is stuck for 10 seconds, loop_position=");
-    Serial.print(loop_position, DEC);
-    Serial.println(", triggering hardware watchdog");
-    ESP.wdtDisable();
-    while (1) {};
   }
 }
 
@@ -729,15 +702,8 @@ void setup()
   Serial.print(" ");
   Serial.println(ESP.getSketchMD5());
 
-  uint32_t tmp;
-  ESP.rtcUserMemoryRead(4, &tmp, 4);
-  if ((tmp & 0xFFFFFF00) == 0x42424200) {
-    uint8_t tmp2 = tmp & 0xFF;
-    Serial.print("loop_position=");
-    Serial.println(tmp2, DEC);
-    crash_loop_position = tmp2;
-    tmp = 0;
-    ESP.rtcUserMemoryWrite(4, &tmp, 4);
+  if (loopwatchdog.restarted()) {
+    Serial.println("System was restarted by loop watchdog");
   }
 
   Wire.begin(sda_pin, scl_pin);
@@ -808,42 +774,29 @@ void setup()
   voltagemonitor.voltage_callback = voltage_callback;
   voltagemonitor.begin();
 
-  loop_monitor.attach(1, loop_check_callback);
+  loopwatchdog.begin();
 }
 
 void loop() {
   static unsigned long last_timeout_check = 0;
 
-  loop_count++;
-  loop_position = 1;
-
   if (jam_loop) {
     while (1) { delay(1); };
   }
 
-  loop_position = 2;
-  loop_position = 3;
-
   nfc.loop();
-  loop_position = 4;
   inputs.loop();
-  loop_position = 5;
   net.loop();
-  loop_position = 6;
 
   if (millis() - last_timeout_check > 200) {
     handle_timeouts();
     last_timeout_check = millis();
   }
 
-  loop_position = 7;
-
   if (state.changed) {
     check_state();
     send_state();
   }
-
-  loop_position = 8;
 
   if (firmware_restart_pending) {
     Serial.println("restarting to complete firmware install...");
@@ -854,8 +807,6 @@ void loop() {
     ESP.restart();
     delay(5000);
   }
-
-  loop_position = 9;
 
   if (reset_pending || restart_pending) {
     Serial.println("rebooting at remote request...");
@@ -873,6 +824,5 @@ void loop() {
     delay(5000);
   }
 
-  loop_position = 10;
-
+  loopwatchdog.feed();
 }
