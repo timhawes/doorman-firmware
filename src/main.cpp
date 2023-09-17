@@ -40,7 +40,7 @@ AppConfig config;
 PN532_I2C pn532i2c(Wire);
 PN532 pn532(pn532i2c);
 NFC nfc(pn532i2c, pn532, pn532_reset_pin);
-NetThing net;
+NetThing net(1500, 4096);
 Buzzer buzzer(prog_buzzer_pin, true);
 Inputs inputs(door_pin, exit_pin, snib_pin);
 VoltageMonitor voltagemonitor;
