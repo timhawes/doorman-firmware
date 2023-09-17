@@ -13,7 +13,6 @@
 #include <base64.hpp>
 
 #include "AppConfig.hpp"
-#include "LoopWatchdog.hpp"
 #include "Relay.hpp"
 #include "VoltageMonitor.hpp"
 #include "app_inputs.h"
@@ -47,7 +46,6 @@ Inputs inputs(door_pin, exit_pin, snib_pin);
 VoltageMonitor voltagemonitor;
 Led led(led_pin);
 Relay relay(relay_pin);
-LoopWatchdog loopwatchdog;
 
 char pending_token[15];
 unsigned long pending_token_time = 0;
@@ -313,7 +311,7 @@ void load_net_config()
                 config.server_fingerprint1, config.server_fingerprint2);
   net.setCred(clientid, config.server_password);
   net.setDebug(config.dev);
-  net.setWatchdog(config.network_watchdog_time);
+  net.setReceiveWatchdog(config.network_watchdog_time);
 }
 
 void load_app_config()
@@ -578,9 +576,6 @@ void network_cmd_metrics_query(const JsonDocument &obj)
   reply["millis"] = millis();
   reply["nfc_reset_count"] = nfc.reset_count;
   reply["nfc_token_count"] = nfc.token_count;
-  if (loopwatchdog.restarted()) {
-    reply["restarted_by_loop_watchdog"] = true;
-  }
   reply.shrinkToFit();
   net.sendJson(reply);
 }
@@ -702,10 +697,6 @@ void setup()
   Serial.print(" ");
   Serial.println(ESP.getSketchMD5());
 
-  if (loopwatchdog.restarted()) {
-    Serial.println("System was restarted by loop watchdog");
-  }
-
   Wire.begin(sda_pin, scl_pin);
 
   Serial.print("SPIFFS: ");
@@ -773,8 +764,6 @@ void setup()
   voltagemonitor.on_mains_callback = on_mains_callback;
   voltagemonitor.voltage_callback = voltage_callback;
   voltagemonitor.begin();
-
-  loopwatchdog.begin();
 }
 
 void loop() {
@@ -823,6 +812,4 @@ void loop() {
     }
     delay(5000);
   }
-
-  loopwatchdog.feed();
 }
