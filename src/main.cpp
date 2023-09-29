@@ -637,7 +637,12 @@ void network_cmd_state_set(const JsonDocument &obj)
 
 void network_cmd_token_info(const JsonDocument &obj)
 {
-  token_info_callback(obj["uid"], obj["found"], obj["name"], obj["access"]);
+  token_info_callback(
+    obj["uid"],
+    obj["found"] | false,
+    obj["name"] | "",
+    obj["access"] | 0
+  );
 }
 
 void network_message_callback(const JsonDocument &obj)
