@@ -88,7 +88,7 @@ Ticker token_lookup_timer;
 
 bool status_updated = false;
 
-buzzer_note network_tune[50];
+buzzer_note network_tune[128];
 buzzer_note ascending[] = { {1000, 250}, {1500, 250}, {2000, 250}, {0, 0} };
 
 void send_state()
