@@ -647,6 +647,11 @@ void network_message_callback(const JsonDocument &obj)
   }
 }
 
+bool system_is_idle()
+{
+  return state.card_active == false && state.exit_active == false;
+}
+
 void setup()
 {
   pinMode(pn532_reset_pin, OUTPUT);
@@ -772,23 +777,27 @@ void loop() {
   yield();
 
   if (firmware_restart_pending) {
-    Serial.println("restarting to complete firmware install...");
-    net.stop();
-    led.off();
-    delay(1000);
-    Serial.println("restarting now!");
-    ESP.restart();
-    delay(5000);
+    if (system_is_idle()) {
+      Serial.println("restarting to complete firmware install...");
+      net.stop();
+      led.off();
+      delay(1000);
+      Serial.println("restarting now!");
+      ESP.restart();
+      delay(5000);
+    }
   }
 
   if (restart_pending) {
-    Serial.println("rebooting at remote request...");
-    net.stop();
-    led.off();
-    delay(1000);
-    Serial.println("restarting now!");
-    ESP.restart();
-    delay(5000);
+    if (system_is_idle()) {
+      Serial.println("rebooting at remote request...");
+      net.stop();
+      led.off();
+      delay(1000);
+      Serial.println("restarting now!");
+      ESP.restart();
+      delay(5000);
+    }
   }
 
 }
