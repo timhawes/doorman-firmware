@@ -51,7 +51,6 @@ char pending_token[15];
 unsigned long pending_token_time = 0;
 
 bool firmware_restart_pending = false;
-bool reset_pending = false;
 bool restart_pending = false;
 
 struct State {
@@ -782,19 +781,13 @@ void loop() {
     delay(5000);
   }
 
-  if (reset_pending || restart_pending) {
+  if (restart_pending) {
     Serial.println("rebooting at remote request...");
     net.stop();
     led.off();
     delay(1000);
-    if (reset_pending) {
-      Serial.println("resetting now!");
-      ESP.reset();
-    }
-    if (restart_pending) {
-      Serial.println("restarting now!");
-      ESP.restart();
-    }
+    Serial.println("restarting now!");
+    ESP.restart();
     delay(5000);
   }
 
