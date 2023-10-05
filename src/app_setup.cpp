@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2020 Tim Hawes
+// SPDX-FileCopyrightText: 2017-2023 Tim Hawes
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -9,12 +9,12 @@
 static const char html[] PROGMEM =
     "<form method='POST' action='/update' />\n"
     "<table>\n"
-    "<tr><th>Key</th><th>Old Value</th><th>New Value</th></tr>\n"
     "<tr><th>SSID</th><td><input type='text' name='ssid' /></td></tr>\n"
     "<tr><th>WPA Password</th><td><input type='text' name='wpa_password' /></td></tr>\n"
     "<tr><th>Server Host</th><td><input type='text' name='server_host' /></td></tr>\n"
     "<tr><th>Server Port</th><td><input type='text' name='server_port' /></td></tr>\n"
     "<tr><th>Server TLS</th><td><input type='checkbox' name='server_tls_enabled' value='1' /></td></tr>\n"
+    "<tr><th>Server TLS Fingerprint</th><td><input type='text' name='server_tls_fingerprint' /></td></tr>\n"
     "<tr><th>Server Password</th><td><input type='text' name='server_password' /></td></tr>\n"
     "</table>\n"
     "<input type='submit' value='Save and Restart' />"
@@ -32,17 +32,32 @@ void SetupMode::configRootHandler() {
 
 void SetupMode::configUpdateHandler() {
   DynamicJsonDocument root(4096);
+  File file;
+
   for (int i=0; i<server.args(); i++) {
     if (server.argName(i) == "ssid") root["ssid"] = server.arg(i);
-    if (server.argName(i) == "wpa_password") root["wpa_password"] = server.arg(i);
-    if (server.argName(i) == "server_host") root["server_host"] = server.arg(i);
-    if (server.argName(i) == "server_port") root["server_port"] = server.arg(i).toInt();
-    if (server.argName(i) == "server_tls_enabled") root["server_tls_enabled"] = (bool)server.arg(i).toInt();
-    if (server.argName(i) == "server_password") root["server_password"] = server.arg(i);
+    if (server.argName(i) == "wpa_password") root["password"] = server.arg(i);
   }
-  File file = SPIFFS.open("config.json", "w");
+  file = SPIFFS.open("wifi.json", "w");
   serializeJson(root, file);
   file.close();
+
+  root.clear();
+
+  for (int i=0; i<server.args(); i++) {
+    if (server.argName(i) == "server_host") root["host"] = server.arg(i);
+    if (server.argName(i) == "server_port") root["port"] = server.arg(i).toInt();
+    if (server.argName(i) == "server_tls_enabled") root["tls"] = (bool)server.arg(i).toInt();
+    if (server.argName(i) == "server_tls_fingerprint" && !server.arg(i).isEmpty()) {
+      root["tls_fingerprint1"] = server.arg(i);
+      root["tls_verify"] = true;
+    }
+    if (server.argName(i) == "server_password") root["password"] = server.arg(i);
+  }
+  file = SPIFFS.open("net.json", "w");
+  serializeJson(root, file);
+  file.close();
+
   server.sendHeader("Location", "/");
   server.send(301);
   delay(500);

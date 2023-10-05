@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2019-2020 Tim Hawes
+// SPDX-FileCopyrightText: 2019-2023 Tim Hawes
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -40,7 +40,7 @@ AppConfig config;
 PN532_I2C pn532i2c(Wire);
 PN532 pn532(pn532i2c);
 NFC nfc(pn532i2c, pn532, pn532_reset_pin);
-NetThing net;
+NetThing net(1500, 4096);
 Buzzer buzzer(prog_buzzer_pin, true);
 Inputs inputs(door_pin, exit_pin, snib_pin);
 VoltageMonitor voltagemonitor;
@@ -49,6 +49,8 @@ Relay relay(relay_pin);
 
 char pending_token[15];
 unsigned long pending_token_time = 0;
+
+bool jam_loop = false;
 
 bool firmware_restart_pending = false;
 bool restart_pending = false;
@@ -85,7 +87,7 @@ Ticker token_lookup_timer;
 
 bool status_updated = false;
 
-buzzer_note network_tune[50];
+buzzer_note network_tune[128];
 buzzer_note ascending[] = { {1000, 250}, {1500, 250}, {2000, 250}, {0, 0} };
 
 void send_state()
@@ -151,7 +153,7 @@ void check_leds()
 
 void handle_timeouts()
 {
-  if (state.card_active && millis() > state.card_unlock_until) {
+  if (state.card_active && (long)(millis() - state.card_unlock_until) > 0) {
     Serial.println("card unlock expired");
     state.card_active = false;
     state.auth = state.auth_none;
@@ -159,17 +161,17 @@ void handle_timeouts()
     strncpy(state.uid, "", sizeof(state.uid));
     state.changed = true;
   }
-  if (state.exit_active && millis() > state.exit_unlock_until) {
+  if (state.exit_active && (long)(millis() - state.exit_unlock_until) > 0) {
     Serial.println("exit unlock expired");
     state.exit_active = false;
     state.changed = true;
   }
-  if (state.snib_active && millis() > state.snib_unlock_until) {
+  if (state.snib_active && (long)(millis() - state.snib_unlock_until) > 0) {
     Serial.println("snib unlock expired");
     state.snib_active = false;
     state.changed = true;
   }
-  if (state.remote_active && millis() > state.remote_unlock_until) {
+  if (state.remote_active && (long)(millis() - state.remote_unlock_until) > 0) {
     Serial.println("remote unlock expired");
     state.remote_active = false;
     state.changed = true;
@@ -183,14 +185,14 @@ void check_state()
       relay.active(true);
       state.unlock_active = true;
       Serial.println("unlocked");
-      net.sendEvent("unlocked");
+      if (config.events) net.sendEvent("unlocked");
     }
   } else {
     if (state.unlock_active) {
       relay.active(false);
       state.unlock_active = false;
       Serial.println("locked");
-      net.sendEvent("locked");
+      if (config.events) net.sendEvent("locked");
     }
   }
 
@@ -219,10 +221,10 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
       state.auth = state.auth_online;
       state.changed = true;
       buzzer.beep(100, 1000);
-      net.sendEvent("auth", 128, "uid=%s user=%s type=online access=granted", state.uid, state.user);
+      if (config.events) net.sendEvent("auth", 128, "uid=%s user=%s type=online access=granted", state.uid, state.user);
     } else {
       buzzer.beep(500, 256);
-      net.sendEvent("auth", 128, "uid=%s user=%s type=online access=denied", uid, name);
+      if (config.events) net.sendEvent("auth", 128, "uid=%s user=%s type=online access=denied", uid, name);
     }
     return;
   }
@@ -237,14 +239,14 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
       state.auth = state.auth_offline;
       state.changed = true;
       buzzer.beep(100, 1000);
-      net.sendEvent("auth", 128, "uid=%s user=%s type=offline access=granted", uid, state.user);
+      if (config.events) net.sendEvent("auth", 128, "uid=%s user=%s type=offline access=granted", uid, state.user);
       return;
     }
   }
 
   buzzer.beep(500, 256);
 
-  net.sendEvent("auth", 128, "uid=%s user=%s type=offline access=denied", uid, name);
+  if (config.events) net.sendEvent("auth", 128, "uid=%s user=%s type=offline access=denied", uid, name);
 
   return;
 }
@@ -285,7 +287,7 @@ void token_present(NFCToken token)
 
   pending_token_time = millis();
   net.sendJson(obj, true);
-  net.sendEvent("token", 64, "uid=%s", pending_token);
+  if (config.events) net.sendEvent("token", 64, "uid=%s", pending_token);
 }
 
 void token_removed(NFCToken token)
@@ -294,19 +296,30 @@ void token_removed(NFCToken token)
   Serial.println(token.uidString());
 }
 
-void load_config()
+void load_wifi_config()
 {
-  config.LoadJson();
-  inputs.set_long_press_time(config.long_press_time);
-  led.setDimLevel(config.led_dim);
-  led.setBrightLevel(config.led_bright);
+  config.LoadWifiJson();
   net.setWiFi(config.ssid, config.wpa_password);
+}
+
+void load_net_config()
+{
+  config.LoadNetJson();
   net.setServer(config.server_host, config.server_port,
                 config.server_tls_enabled, config.server_tls_verify,
                 config.server_fingerprint1, config.server_fingerprint2);
   net.setCred(clientid, config.server_password);
   net.setDebug(config.dev);
-  net.setWatchdog(config.network_watchdog_time);
+  net.setReceiveWatchdog(config.network_watchdog_time);
+}
+
+void load_app_config()
+{
+  config.LoadAppJson();
+  inputs.set_long_press_time(config.long_press_time);
+  led.setDimLevel(config.led_dim);
+  led.setBrightLevel(config.led_bright);
+  net.setDebug(config.dev);
   nfc.read_counter = config.nfc_read_counter;
   nfc.read_data = config.nfc_read_data;
   nfc.read_sig = config.nfc_read_sig;
@@ -319,6 +332,13 @@ void load_config()
   voltagemonitor.set_ratio(config.voltage_multiplier);
   voltagemonitor.set_threshold(config.voltage_falling_threshold, config.voltage_rising_threshold);
   state.changed = true;
+}
+
+void load_config()
+{
+  load_wifi_config();
+  load_net_config();
+  load_app_config();
 }
 
 void door_open_callback()
@@ -337,7 +357,7 @@ void door_open_callback()
   }
   state.door_open = true;
   state.changed = true;
-  net.sendEvent("door_open");
+  if (config.events) net.sendEvent("door_open");
 }
 
 void door_close_callback()
@@ -345,7 +365,7 @@ void door_close_callback()
   Serial.println("door-close");
   state.door_open = false;
   state.changed = true;
-  net.sendEvent("door_closed");
+  if (config.events) net.sendEvent("door_closed");
 }
 
 void exit_press_callback()
@@ -355,9 +375,9 @@ void exit_press_callback()
     state.exit_active = true;
     state.exit_unlock_until = millis() + config.exit_unlock_time;
     state.changed = true;
-    net.sendEvent("exit_request");
+    if (config.events) net.sendEvent("exit_request");
   } else {
-    net.sendEvent("exit_request_ignored");
+    if (config.events) net.sendEvent("exit_request_ignored");
   }
 }
 
@@ -370,7 +390,7 @@ void exit_longpress_callback()
       state.snib_active = false;
       state.exit_active = false;
       state.changed = true;
-      net.sendEvent("snib_off");
+      if (config.events) net.sendEvent("snib_off");
     } else {
       if (state.snib_enable && (state.on_battery == false || config.allow_snib_on_battery)) {
         buzzer.beep(100, 1000);
@@ -378,7 +398,7 @@ void exit_longpress_callback()
         state.snib_unlock_until = millis () + config.snib_unlock_time;
         state.exit_active = false;
         state.changed = true;
-        net.sendEvent("snib_on");
+        if (config.events) net.sendEvent("snib_on");
       }
     }
   }
@@ -402,13 +422,13 @@ void snib_press_callback()
   if (state.snib_active) {
     state.snib_active = false;
     state.changed = true;
-    net.sendEvent("snib_off");
+    if (config.events) net.sendEvent("snib_off");
   } else {
     if (state.snib_enable && (state.on_battery == false || config.allow_snib_on_battery)) {
       state.snib_active = true;
       state.snib_unlock_until = millis () + config.snib_unlock_time;
       state.changed = true;
-      net.sendEvent("snib_on");
+      if (config.events) net.sendEvent("snib_on");
     }
   }
 }
@@ -428,7 +448,7 @@ void on_battery_callback()
   Serial.println("on battery");
   state.on_battery = true;
   state.changed = true;
-  net.sendEvent("power_battery");
+  if (config.events) net.sendEvent("power_battery");
 }
 
 void on_mains_callback()
@@ -436,7 +456,7 @@ void on_mains_callback()
   Serial.println("on mains");
   state.on_battery = false;
   state.changed = true;
-  net.sendEvent("power_mains");
+  if (config.events) net.sendEvent("power_mains");
 }
 
 void voltage_callback(float voltage)
@@ -497,8 +517,14 @@ void network_transfer_status_callback(const char *filename, int progress, bool a
       previous_progress = progress;
     }
   }
-  if (changed && strcmp("config.json", filename) == 0) {
-    load_config();
+  if (changed && strcmp("wifi.json", filename) == 0) {
+    load_wifi_config();
+  }
+  if (changed && strcmp("net.json", filename) == 0) {
+    load_net_config();
+  }
+  if (changed && strcmp("app.json", filename) == 0) {
+    load_app_config();
   }
 }
 
@@ -638,6 +664,10 @@ void network_message_callback(const JsonDocument &obj)
     network_cmd_state_set(obj);
   } else if (cmd == "token_info") {
     network_cmd_token_info(obj);
+  } else if (cmd == "test_jam") {
+    while (1) {};
+  } else if (cmd == "test_jam_loop") {
+    jam_loop = true;
   } else {
     StaticJsonDocument<JSON_OBJECT_SIZE(3)> reply;
     reply["cmd"] = "error";
@@ -691,7 +721,7 @@ void setup()
   }
 
   unsigned long start_time = millis();
-  while (millis() - start_time < 500) {
+  while ((long)(millis() - start_time) < 500) {
     if (digitalRead(prog_buzzer_pin) == LOW) {
       Serial.println("prog button pressed, going into setup mode");
       SetupMode setup_mode(clientid, setup_password);
@@ -705,10 +735,10 @@ void setup()
   pinMode(prog_buzzer_pin, OUTPUT);
   digitalWrite(prog_buzzer_pin, LOW);
 
-  if (SPIFFS.exists("config.json")) {
+  if (SPIFFS.exists("wifi.json") && SPIFFS.exists("net.json")) {
     load_config();
   } else {
-    Serial.println("config.json is missing, entering setup mode");
+    Serial.println("config is missing, entering setup mode");
     net.stop();
     delay(1000);
     SetupMode setup_mode(clientid, setup_password);
@@ -743,28 +773,20 @@ void setup()
   voltagemonitor.on_mains_callback = on_mains_callback;
   voltagemonitor.voltage_callback = voltage_callback;
   voltagemonitor.begin();
-
-  ESP.wdtDisable();
 }
 
 void loop() {
   static unsigned long last_timeout_check = 0;
 
-  ESP.wdtFeed();
+  if (jam_loop) {
+    while (1) { delay(1); };
+  }
 
   nfc.loop();
-
-  yield();
-
   inputs.loop();
-
-  yield();
-
   net.loop();
 
-  yield();
-
-  if (millis() - last_timeout_check > 200) {
+  if ((long)(millis() - last_timeout_check) > 200) {
     handle_timeouts();
     last_timeout_check = millis();
   }
@@ -773,8 +795,6 @@ void loop() {
     check_state();
     send_state();
   }
-
-  yield();
 
   if (firmware_restart_pending) {
     if (system_is_idle()) {
@@ -799,5 +819,4 @@ void loop() {
       delay(5000);
     }
   }
-
 }

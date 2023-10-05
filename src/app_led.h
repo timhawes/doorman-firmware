@@ -13,6 +13,8 @@ class Led
 private:
   Ticker ticker;
   enum { MODE_OFF, MODE_DIM, MODE_BLINK, MODE_SLOW, MODE_MEDIUM, MODE_FAST, MODE_ON } mode = MODE_OFF;
+  unsigned long next_change;
+  bool pending_change = false;
   int led_pin;
   int dim_level = 150;
   int bright_level = 1023;

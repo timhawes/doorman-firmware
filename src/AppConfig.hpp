@@ -13,7 +13,7 @@ class AppConfig {
   bool allow_snib_on_battery;
   bool anti_bounce;
   bool dev;
-  bool error_sounds;
+  bool events;
   bool hold_exit_for_snib;
   bool invert_relay; // false=fail-secure, true=fail-safe/maglocks
   bool nfc_read_counter;
@@ -47,7 +47,9 @@ class AppConfig {
   uint8_t server_fingerprint1[21];
   uint8_t server_fingerprint2[21];
   void LoadDefaults();
-  bool LoadJson(const char *filename = "config.json");
+  bool LoadWifiJson(const char *filename = "wifi.json");
+  bool LoadNetJson(const char *filename = "net.json");
+  bool LoadAppJson(const char *filename = "app.json");
   void LoadOverrides();
 };
 

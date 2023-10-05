@@ -6,17 +6,20 @@
 
 Led::Led(int _led_pin) {
   led_pin = _led_pin;
+  ticker.attach_ms(5, std::bind(&Led::callback, this));
 }
 
 void Led::callback() {
-  if (is_on) {
-    is_on = !is_on;
-    analogWrite(led_pin, 0);
-    ticker.once_ms(off_time, std::bind(&Led::callback, this));
-  } else {
-    is_on = !is_on;
-    analogWrite(led_pin, bright_level);
-    ticker.once_ms(on_time, std::bind(&Led::callback, this));
+  if (pending_change && (long)(millis() - next_change) >= 0) {
+    if (is_on) {
+      is_on = !is_on;
+      analogWrite(led_pin, 0);
+      next_change = millis() + off_time;
+    } else {
+      is_on = !is_on;
+      analogWrite(led_pin, bright_level);
+      next_change = millis() + on_time;
+    }
   }
 }
 
@@ -29,7 +32,7 @@ void Led::on() {
     return;
   }
   mode = MODE_ON;
-  ticker.detach();
+  pending_change = false;
   analogWrite(led_pin, bright_level);
   is_on = true;
 }
@@ -39,7 +42,7 @@ void Led::off() {
     return;
   }
   mode = MODE_OFF;
-  ticker.detach();
+  pending_change = false;
   analogWrite(led_pin, 0);
   is_on = false;
 }
@@ -49,10 +52,10 @@ void Led::flash_fast() {
     return;
   }
   mode = MODE_FAST;
-  ticker.detach();
   on_time = 40;
   off_time = 40;
-  callback();
+  next_change = millis();
+  pending_change = true;
 }
 
 void Led::flash_medium() {
@@ -60,10 +63,10 @@ void Led::flash_medium() {
     return;
   }
   mode = MODE_MEDIUM;
-  ticker.detach();
   on_time = 500;
   off_time = 500;
-  callback();
+  next_change = millis();
+  pending_change = true;
 }
 
 void Led::flash_slow() {
@@ -71,10 +74,10 @@ void Led::flash_slow() {
     return;
   }
   mode = MODE_SLOW;
-  ticker.detach();
   on_time = 1000;
   off_time = 1000;
-  callback();
+  next_change = millis();
+  pending_change = true;
 }
 
 void Led::blink() {
@@ -82,10 +85,10 @@ void Led::blink() {
     return;
   }
   mode = MODE_BLINK;
-  ticker.detach();
   on_time = 25;
   off_time = 1225;
-  callback();
+  next_change = millis();
+  pending_change = true;
 }
 
 void Led::dim() {
@@ -93,7 +96,7 @@ void Led::dim() {
     return;
   }
   mode = MODE_DIM;
-  ticker.detach();
+  pending_change = false;
   analogWrite(led_pin, dim_level);
 }
 
