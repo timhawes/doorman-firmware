@@ -16,6 +16,7 @@ private:
   String user;
   bool query_v1(File file, uint8_t uidlen, uint8_t *uid);
   bool query_v2(File file, uint8_t uidlen, uint8_t *uid);
+  bool query_v3(File file, uint8_t uidlen, uint8_t *uid);
 public:
   TokenDB(const char *filename);
   bool lookup(uint8_t uidlen, uint8_t *uid);
