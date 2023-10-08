@@ -310,6 +310,8 @@ void load_net_config()
                 config.server_fingerprint1, config.server_fingerprint2);
   net.setCred(clientid, config.server_password);
   net.setDebug(config.dev);
+  net.setConnectionStableTime(config.network_conn_stable_time);
+  net.setReconnectMaxTime(config.network_reconnect_max_time);
   net.setReceiveWatchdog(config.network_watchdog_time);
 }
 

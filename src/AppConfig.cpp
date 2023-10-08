@@ -29,6 +29,8 @@ void AppConfig::LoadDefaults() {
   led_dim = 150;
   led_bright = 1023;
   long_press_time = 1000;
+  network_conn_stable_time = 30000;
+  network_reconnect_max_time = 300000;
   network_watchdog_time = 3600000;
   nfc_read_counter = false;
   nfc_read_data = 0;
@@ -103,7 +105,9 @@ bool AppConfig::LoadNetJson(const char *filename) {
   root["host"].as<String>().toCharArray(server_host, sizeof(server_host));
   root["password"].as<String>().toCharArray(server_password, sizeof(server_password));
 
-  network_watchdog_time = root["watchdog_time"];
+  network_conn_stable_time = root["conn_stable_time"] | 30000;
+  network_reconnect_max_time = root["reconnect_max_time"] | 300000;
+  network_watchdog_time = root["watchdog_time"] | 3600000;
   server_port = root["port"];
   server_tls_enabled = root["tls"];
   server_tls_verify = root["tls_verify"];

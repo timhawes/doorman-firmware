@@ -33,6 +33,8 @@ class AppConfig {
   int led_dim;
   int led_bright;
   int long_press_time;
+  int network_conn_stable_time;
+  int network_reconnect_max_time;
   int network_watchdog_time;
   int nfc_read_data;
   int nfc_check_interval = 10000;
