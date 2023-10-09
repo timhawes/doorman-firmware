@@ -49,8 +49,6 @@ Relay relay(relay_pin);
 char pending_token[15];
 unsigned long pending_token_time = 0;
 
-bool jam_loop = false;
-
 bool firmware_restart_pending = false;
 bool restart_pending = false;
 
@@ -665,10 +663,6 @@ void network_message_callback(const JsonDocument &obj)
     network_cmd_state_set(obj);
   } else if (cmd == "token_info") {
     network_cmd_token_info(obj);
-  } else if (cmd == "test_jam") {
-    while (1) {};
-  } else if (cmd == "test_jam_loop") {
-    jam_loop = true;
   } else {
     StaticJsonDocument<JSON_OBJECT_SIZE(3)> reply;
     reply["cmd"] = "error";
@@ -778,10 +772,6 @@ void setup()
 
 void loop() {
   static unsigned long last_timeout_check = 0;
-
-  if (jam_loop) {
-    while (1) { delay(1); };
-  }
 
   nfc.loop();
   inputs.loop();
