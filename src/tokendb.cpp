@@ -87,9 +87,7 @@ bool TokenDB::query_v3(File file, uint8_t uidlen, uint8_t *uid) {
   while (file.available()) {
     uint8_t xuidlen = file.read();
     uint8_t xuid[xuidlen];
-    for (int i=0; i<xuidlen; i++) {
-      xuid[i] = file.read();
-    }
+    file.readBytes((char*)xuid, xuidlen);
     uint8_t user_length = file.read();
     char new_user[user_length+1];
     file.readBytes(new_user, user_length);
