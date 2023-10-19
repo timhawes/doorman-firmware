@@ -13,10 +13,19 @@ AppConfig::AppConfig() {
 }
 
 void AppConfig::LoadDefaults() {
-  strlcpy(server_host, "", sizeof(server_host));
-  strlcpy(server_password, "", sizeof(server_password));
+  // wifi
   strlcpy(ssid, "", sizeof(ssid));
   strlcpy(wpa_password, "", sizeof(wpa_password));
+  // net
+  strlcpy(server_host, "", sizeof(server_host));
+  strlcpy(server_password, "", sizeof(server_password));
+  network_conn_stable_time = 30000;
+  network_reconnect_max_time = 300000;
+  network_watchdog_time = 3600000;
+  server_port = 14260;
+  server_tls_enabled = false;
+  server_tls_verify = false;
+  // app
   allow_snib_on_battery = false;
   anti_bounce = false;
   card_unlock_time = 5000;
@@ -26,28 +35,22 @@ void AppConfig::LoadDefaults() {
   exit_unlock_time = 5000;
   hold_exit_for_snib = false;
   invert_relay = false;
-  led_dim = 150;
   led_bright = 1023;
+  led_dim = 150;
   long_press_time = 1000;
-  network_conn_stable_time = 30000;
-  network_reconnect_max_time = 300000;
-  network_watchdog_time = 3600000;
+  nfc_1m_limit = 60;
+  nfc_5s_limit = 30;
+  nfc_check_interval = 10000;
   nfc_read_counter = false;
   nfc_read_data = 0;
   nfc_read_sig = false;
-  nfc_check_interval = 10000;
   nfc_reset_interval = 1000;
-  nfc_5s_limit = 30;
-  nfc_1m_limit = 60;
   remote_unlock_time = 86400000;
-  server_port = 14260;
-  server_tls_enabled = false;
-  server_tls_verify = false;
   snib_unlock_time = 1800000;
   token_query_timeout = 1000;
   voltage_check_interval = 5000;
   voltage_falling_threshold = 13.7;
-  voltage_multiplier = 1.470588;
+  voltage_multiplier = 0.0146;
   voltage_rising_threshold = 13.6;
 }
 
@@ -108,9 +111,9 @@ bool AppConfig::LoadNetJson(const char *filename) {
   network_conn_stable_time = root["conn_stable_time"] | 30000;
   network_reconnect_max_time = root["reconnect_max_time"] | 300000;
   network_watchdog_time = root["watchdog_time"] | 3600000;
-  server_port = root["port"];
-  server_tls_enabled = root["tls"];
-  server_tls_verify = root["tls_verify"];
+  server_port = root["port"] | 14260;
+  server_tls_enabled = root["tls"] | false;
+  server_tls_verify = root["tls_verify"] | false;
 
   memset(server_fingerprint1, 0, sizeof(server_fingerprint1));
   memset(server_fingerprint2, 0, sizeof(server_fingerprint2));
@@ -144,32 +147,32 @@ bool AppConfig::LoadAppJson(const char *filename) {
     return false;
   }
 
-  allow_snib_on_battery = root["allow_snib_on_battery"];
-  anti_bounce = root["anti_bounce"];
-  card_unlock_time = root["card_unlock_time"];
-  dev = root["dev"];
-  events = root["events"] | false;
-  exit_interactive_time = root["exit_interactive_time"];
-  exit_unlock_time = root["exit_unlock_time"];
-  hold_exit_for_snib = root["hold_exit_for_snib"];
-  invert_relay = root["invert_relay"];
-  led_dim = root["led_dim"] | 150;
+  allow_snib_on_battery = root["allow_snib_on_battery"] | false;
+  anti_bounce = root["anti_bounce"] | false;
+  card_unlock_time = root["card_unlock_time"] | 5000;
+  dev = root["dev"] | false;
+  events = root["events"] | true;
+  exit_interactive_time = root["exit_interactive_time"] | 0;
+  exit_unlock_time = root["exit_unlock_time"] | 5000;
+  hold_exit_for_snib = root["hold_exit_for_snib"] | false;
+  invert_relay = root["invert_relay"] | false;
   led_bright = root["led_bright"] | 1023;
-  long_press_time = root["long_press_time"];
+  led_dim = root["led_dim"] | 150;
+  long_press_time = root["long_press_time"] | 1000;
+  nfc_1m_limit = root["nfc_1m_limit"] | 60;
+  nfc_5s_limit = root["nfc_5s_limit"] | 30;
+  nfc_check_interval = root["nfc_check_interval"] | 10000;
   nfc_read_counter = root["nfc_read_counter"] | false;
   nfc_read_data = root["nfc_read_data"] | 0;
   nfc_read_sig = root["nfc_read_sig"] | false;
-  nfc_check_interval = root["nfc_check_interval"] | 10000;
   nfc_reset_interval = root["nfc_reset_interval"] | 1000;
-  nfc_5s_limit = root["nfc_5s_limit"] | 30;
-  nfc_1m_limit = root["nfc_1m_limit"] | 60;
-  remote_unlock_time = root["remote_unlock_time"];
-  snib_unlock_time = root["snib_unlock_time"];
-  token_query_timeout = root["token_query_timeout"];
-  voltage_check_interval = root["voltage_check_interval"];
-  voltage_falling_threshold = root["voltage_falling_threshold"];
-  voltage_multiplier = root["voltage_multiplier"];
-  voltage_rising_threshold = root["voltage_rising_threshold"];
+  remote_unlock_time = root["remote_unlock_time"] | 86400000;
+  snib_unlock_time = root["snib_unlock_time"] | 1800000;
+  token_query_timeout = root["token_query_timeout"] | 1000;
+  voltage_check_interval = root["voltage_check_interval"] | 5000;
+  voltage_falling_threshold = root["voltage_falling_threshold"] | 13.7;
+  voltage_multiplier = root["voltage_multiplier"] | 0.0146;
+  voltage_rising_threshold = root["voltage_rising_threshold"] | 13.6;
 
   LoadOverrides();
 
