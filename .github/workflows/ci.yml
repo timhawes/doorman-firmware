@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [ "main", "debug" ]
+    branches:
+      - main
+    tags:
+      - v0.0.*
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
@@ -43,8 +46,13 @@ jobs:
     - name: Rename the artifact
       run: |
         mkdir firmware
-        cp .pio/build/esp12e/firmware.bin firmware/doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.bin
-        cp .pio/build/esp12e/firmware.elf firmware/doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.elf
+        if [ "${{github.ref_type}}" = "tag" ]; then
+          cp .pio/build/esp12e/firmware.bin firmware/doorman-esp8266-${{github.ref_name}}-${{env.BIN_MD5}}.bin
+          cp .pio/build/esp12e/firmware.elf firmware/doorman-esp8266-${{github.ref_name}}-${{env.BIN_MD5}}.elf
+        else
+          cp .pio/build/esp12e/firmware.bin firmware/doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.bin
+          cp .pio/build/esp12e/firmware.elf firmware/doorman-esp8266-${{env.TODAY}}-git-${{env.SHORT_SHA}}-${{env.BIN_MD5}}.elf
+        fi
     - uses: actions/upload-artifact@v3
       with:
         name: firmware
@@ -52,9 +60,6 @@ jobs:
 
   upload:
     needs: build
-    env:
-      ARTIFACT_URL: ${{vars.ARTIFACT_URL}}
-      ARTIFACT_KEY: ${{secrets.ARTIFACT_KEY}}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v3
@@ -62,15 +67,14 @@ jobs:
           name: firmware
           path: firmware
       - name: Upload
-        if: ${{ env.ARTIFACT_URL != '' && env.ARTIFACT_KEY != '' }}
         run: |
           for filename in *; do
             curl \
               -X PUT \
-              --oauth2-bearer $ARTIFACT_KEY \
+              --oauth2-bearer ${{secrets.ARTIFACT_KEY}} \
               --header "Content-Type: application/octet-stream" \
               --data-binary @$filename \
               --fail \
-              $ARTIFACT_URL/$filename
+              ${{vars.ARTIFACT_URL}}/$filename
           done
         working-directory: firmware
