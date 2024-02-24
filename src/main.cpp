@@ -296,6 +296,7 @@ void token_removed(NFCToken token)
 void load_wifi_config()
 {
   config.LoadWifiJson();
+  net.setWifiCheckInterval(config.wifi_check_interval);
   net.setWiFi(config.ssid, config.wpa_password);
 }
 

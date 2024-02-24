@@ -16,6 +16,7 @@ void AppConfig::LoadDefaults() {
   // wifi
   strlcpy(ssid, "", sizeof(ssid));
   strlcpy(wpa_password, "", sizeof(wpa_password));
+  wifi_check_interval = 60000;
   // net
   strlcpy(server_host, "", sizeof(server_host));
   strlcpy(server_password, "", sizeof(server_password));
@@ -79,6 +80,7 @@ bool AppConfig::LoadWifiJson(const char *filename) {
 
   root["ssid"].as<String>().toCharArray(ssid, sizeof(ssid));
   root["password"].as<String>().toCharArray(wpa_password, sizeof(wpa_password));
+  wifi_check_interval = root["wifi_check_interval"] | 60000;
 
   LoadOverrides();
 

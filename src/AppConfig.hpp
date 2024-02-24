@@ -13,6 +13,7 @@ class AppConfig {
   // wifi
   char ssid[33];
   char wpa_password[64];
+  int wifi_check_interval;
   // net
   bool server_tls_enabled;
   bool server_tls_verify;
