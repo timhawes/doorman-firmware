@@ -51,6 +51,7 @@ unsigned long pending_token_time = 0;
 
 bool firmware_restart_pending = false;
 bool restart_pending = false;
+uint16_t restart_reason = 0;
 
 struct State {
   bool changed = true;
@@ -493,11 +494,11 @@ void network_disconnect_callback()
   state.changed = true;
 }
 
-void network_restart_callback(bool immediate, bool firmware)
+void network_restart_callback(bool immediate, bool firmware, uint16_t reason)
 {
+  restart_reason = reason;
   if (immediate) {
-    ESP.reset();
-    delay(5000);
+    net.restartWithReason(restart_reason);
   }
   if (firmware) {
     firmware_restart_pending = true;
@@ -722,7 +723,7 @@ void setup()
       Serial.println("prog button pressed, going into setup mode");
       SetupMode setup_mode(clientid, setup_password);
       setup_mode.run();
-      ESP.restart();
+      net.restartWithReason(NETTHING_RESTART_CONFIG_CHANGE);
     }
   }
 
@@ -739,7 +740,7 @@ void setup()
     delay(1000);
     SetupMode setup_mode(clientid, setup_password);
     setup_mode.run();
-    ESP.restart();
+    net.restartWithReason(NETTHING_RESTART_CONFIG_CHANGE);
   }
 
   led.begin();
@@ -795,8 +796,7 @@ void loop() {
       led.off();
       delay(1000);
       Serial.println("restarting now!");
-      ESP.restart();
-      delay(5000);
+      net.restartWithReason(restart_reason);
     }
   }
 
@@ -807,8 +807,7 @@ void loop() {
       led.off();
       delay(1000);
       Serial.println("restarting now!");
-      ESP.restart();
-      delay(5000);
+      net.restartWithReason(restart_reason);
     }
   }
 }
