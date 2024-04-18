@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2018-2023 Tim Hawes
+// SPDX-FileCopyrightText: 2018-2024 Tim Hawes
 //
 // SPDX-License-Identifier: MIT
 
@@ -13,6 +13,7 @@ class TokenDB
 private:
   char _filename[50];
   int access_level;
+  int dbversion = -1;
   String user;
   bool query_v1(File file, uint8_t uidlen, uint8_t *uid);
   bool query_v2(File file, uint8_t uidlen, uint8_t *uid);
@@ -22,6 +23,7 @@ public:
   bool lookup(uint8_t uidlen, uint8_t *uid);
   bool lookup(const char *uid);
   int get_access_level();
+  int get_version();
   String get_user();
 };
 
