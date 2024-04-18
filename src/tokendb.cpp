@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2018-2023 Tim Hawes
+// SPDX-FileCopyrightText: 2018-2024 Tim Hawes
 //
 // SPDX-License-Identifier: MIT
 
@@ -91,6 +91,7 @@ bool TokenDB::query_v3(File file, uint8_t uidlen, uint8_t *uid) {
     uint8_t user_length = file.read();
     char new_user[user_length+1];
     file.readBytes(new_user, user_length);
+    new_user[user_length] = 0;
     if ((xuidlen == uidlen) && (memcmp(xuid, uid, xuidlen) == 0)) {
       Serial.println("TokenDB: v3 access-granted");
       file.close();
