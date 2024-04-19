@@ -227,7 +227,7 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
     return;
   }
 
-  TokenDB tokendb("tokens.dat");
+  TokenDB tokendb(TOKENS_FILENAME);
   if (tokendb.lookup(uid)) {
     if (tokendb.get_access_level() > 0) {
       state.card_active = true;
@@ -517,13 +517,13 @@ void network_transfer_status_callback(const char *filename, int progress, bool a
       previous_progress = progress;
     }
   }
-  if (changed && strcmp("wifi.json", filename) == 0) {
+  if (changed && strcmp(WIFI_JSON_FILENAME, filename) == 0) {
     load_wifi_config();
   }
-  if (changed && strcmp("net.json", filename) == 0) {
+  if (changed && strcmp(NET_JSON_FILENAME, filename) == 0) {
     load_net_config();
   }
-  if (changed && strcmp("app.json", filename) == 0) {
+  if (changed && strcmp(APP_JSON_FILENAME, filename) == 0) {
     load_app_config();
   }
 }
@@ -716,6 +716,8 @@ void setup()
     Serial.println("failed");
   }
 
+  fix_filenames();
+
   unsigned long start_time = millis();
   while ((long)(millis() - start_time) < 500) {
     if (digitalRead(prog_buzzer_pin) == LOW) {
@@ -731,7 +733,7 @@ void setup()
   pinMode(prog_buzzer_pin, OUTPUT);
   digitalWrite(prog_buzzer_pin, LOW);
 
-  if (SPIFFS.exists("wifi.json") && SPIFFS.exists("net.json")) {
+  if (SPIFFS.exists(WIFI_JSON_FILENAME) && SPIFFS.exists(NET_JSON_FILENAME)) {
     load_config();
   } else {
     Serial.println("config is missing, entering setup mode");
@@ -750,6 +752,7 @@ void setup()
   net.onReceiveJson(network_message_callback);
   net.onTransferStatus(network_transfer_status_callback);
   net.setCommandKey("cmd");
+  net.setFilenamePrefix("/");
   net.start();
 
   inputs.door_close_callback = door_close_callback;

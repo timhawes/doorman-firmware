@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2017-2019 Tim Hawes
+// SPDX-FileCopyrightText: 2017-2024 Tim Hawes
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -10,6 +10,7 @@
 int decode_hex(const char *hexstr, uint8_t *bytes, size_t max_len);
 String hexlify(uint8_t bytes[], uint8_t len);
 void i2c_scan();
+void fix_filenames();
 
 class MilliClock
 {

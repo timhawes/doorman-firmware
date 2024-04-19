@@ -53,9 +53,9 @@ class AppConfig {
   int voltage_check_interval;
   long token_query_timeout;
   void LoadDefaults();
-  bool LoadWifiJson(const char *filename = "wifi.json");
-  bool LoadNetJson(const char *filename = "net.json");
-  bool LoadAppJson(const char *filename = "app.json");
+  bool LoadWifiJson(const char *filename = "/wifi.json");
+  bool LoadNetJson(const char *filename = "/net.json");
+  bool LoadAppJson(const char *filename = "/app.json");
   void LoadOverrides();
 };
 

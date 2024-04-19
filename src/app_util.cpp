@@ -1,8 +1,9 @@
-// SPDX-FileCopyrightText: 2017-2019 Tim Hawes
+// SPDX-FileCopyrightText: 2017-2024 Tim Hawes
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "app_util.h"
+#include "FS.h"
 #include "Wire.h"
 
 int decode_hex(const char *hexstr, uint8_t *bytes, size_t max_len)
@@ -76,6 +77,30 @@ void i2c_scan()
       if (address<16)
         Serial.print("0");
       Serial.println(address,HEX);
+    }
+  }
+}
+
+/* rename filenames to use absolute paths, as recommended by SPIFFS docs */
+void fix_filenames() {
+  Dir dir = SPIFFS.openDir("");
+  while (dir.next()) {
+    if (dir.isFile()) {
+      if (dir.fileName()[0] != '/') {
+        String new_filename = "/" + dir.fileName();
+        if (SPIFFS.exists(new_filename)) {
+          Serial.print("deleting ");
+          Serial.println(dir.fileName());
+          SPIFFS.remove(dir.fileName());
+        } else {
+          // rename file
+          Serial.print("renaming ");
+          Serial.print(dir.fileName());
+          Serial.print(" to ");
+          Serial.println(new_filename);
+          SPIFFS.rename(dir.fileName(), new_filename);
+        }
+      }
     }
   }
 }
