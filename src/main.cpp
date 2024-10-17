@@ -71,7 +71,7 @@ struct State {
   bool on_battery = false;
   bool door_open = false;
   bool network_up = false;
-  char user[20] = "";
+  char user[33] = "";
   char uid[15] = "";
   enum { auth_none, auth_online, auth_offline } auth;
 } state;
