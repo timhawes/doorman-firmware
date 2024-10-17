@@ -11,7 +11,7 @@
 
 TokenDB::TokenDB(const char *filename)
 {
-  strncpy(_filename, filename, sizeof(_filename));
+  _filename = filename;
 }
 
 bool TokenDB::query_v1(File file, uint8_t uidlen, uint8_t *uid) {

@@ -11,7 +11,7 @@
 class TokenDB
 {
 private:
-  char _filename[50];
+  const char *_filename;
   int access_level;
   int dbversion = -1;
   String user;

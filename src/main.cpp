@@ -71,7 +71,7 @@ struct State {
   bool on_battery = false;
   bool door_open = false;
   bool network_up = false;
-  char user[20] = "";
+  char user[33] = "";
   char uid[15] = "";
   enum { auth_none, auth_online, auth_offline } auth;
 } state;
@@ -215,7 +215,9 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
       state.card_active = true;
       state.card_unlock_until = millis() + config.card_unlock_time;
       strncpy(state.user, name, sizeof(state.user));
+      state.user[sizeof(state.user)-1] = '\0';
       strncpy(state.uid, uid, sizeof(state.uid));
+      state.uid[sizeof(state.uid)-1] = '\0';
       state.auth = state.auth_online;
       state.changed = true;
       buzzer.beep(100, 1000);
@@ -233,7 +235,9 @@ void token_info_callback(const char *uid, bool found, const char *name, uint8_t 
       state.card_active = true;
       state.card_unlock_until = millis() + config.card_unlock_time;
       strncpy(state.user, tokendb.get_user().c_str(), sizeof(state.user));
+      state.user[sizeof(state.user)-1] = '\0';
       strncpy(state.uid, uid, sizeof(state.uid));
+      state.uid[sizeof(state.uid)-1] = '\0';
       state.auth = state.auth_offline;
       state.changed = true;
       buzzer.beep(100, 1000);
@@ -281,6 +285,7 @@ void token_present(NFCToken token)
   obj.shrinkToFit();
 
   strncpy(pending_token, token.uidString().c_str(), sizeof(pending_token));
+  pending_token[sizeof(pending_token)-1] = '\0';
   token_lookup_timer.once_ms(config.token_query_timeout, std::bind(&token_info_callback, pending_token, false, "", 0));
 
   pending_token_time = millis();
@@ -622,9 +627,11 @@ void network_cmd_state_set(const JsonDocument &obj)
   }
   if (obj.containsKey("user")) {
     strncpy(state.user, obj["user"], sizeof(state.user));
+    state.user[sizeof(state.user)-1] = '\0';
   }
   if (obj.containsKey("uid")) {
     strncpy(state.uid, obj["uid"], sizeof(state.uid));
+    state.uid[sizeof(state.uid)-1] = '\0';
   }
   if (obj.containsKey("snib_renew")) {
     if (state.snib_active) {
